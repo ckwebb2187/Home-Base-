@@ -1,0 +1,306 @@
+<title>Home Base</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Schibsted+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a clock header over a two-column board (projects + links | today), notes full width below. */
+:root {
+  --bg: #eef1f0;
+  --panel: #fbfcfc;
+  --ink: #17201f;
+  --muted: #5d6b69;
+  --line: #d3dbd9;
+  --accent: #1f6f66;
+  --accent-ink: #ffffff;
+  --signal: #c98a12;
+  --done: #8a9795;
+  --danger: #b2412f;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1514; --panel: #161e1d; --ink: #e5ecea; --muted: #93a29f; --line: #2a3634;
+    --accent: #4fb3a6; --accent-ink: #0b1312; --signal: #e3a93b; --done: #5f6d6a; --danger: #e07a66;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1514; --panel: #161e1d; --ink: #e5ecea; --muted: #93a29f; --line: #2a3634;
+  --accent: #4fb3a6; --accent-ink: #0b1312; --signal: #e3a93b; --done: #5f6d6a; --danger: #e07a66;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); }
+.wrap {
+  max-width: 1080px; margin: 0 auto;
+  padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 20px;
+}
+header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; padding-bottom: 8px; border-bottom: 2px solid var(--ink); }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 800 clamp(34px, 6vw, 56px)/1 var(--display); margin: 6px 0 0; letter-spacing: -.02em; text-wrap: balance; }
+.clock { text-align: right; }
+.clock .time { font: 600 clamp(28px, 4.5vw, 40px)/1 var(--mono); font-variant-numeric: tabular-nums; }
+.clock .date { color: var(--muted); margin-top: 4px; }
+.status { font: 400 12px/1.4 var(--mono); color: var(--muted); }
+.status.warn { color: var(--signal); }
+
+.board { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 20px; }
+@media (max-width: 760px) { .board { grid-template-columns: minmax(0, 1fr); } }
+.col { display: grid; gap: 20px; align-content: start; min-width: 0; }
+section.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+h2 { font: 600 20px/1.2 var(--display); margin: 0; }
+.count { font: 400 12px/1 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Projects */
+.projects { display: grid; gap: 10px; }
+.proj { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; }
+.proj .dot { grid-row: span 2; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+.proj .dot.idle { background: transparent; border: 2px solid var(--done); }
+.proj b { font-weight: 600; }
+.proj .meta { color: var(--muted); font-size: 13px; min-width: 0; }
+.proj .meta a { margin-right: 10px; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+
+/* Lists */
+ul.list { list-style: none; margin: 0; padding: 0; display: grid; }
+ul.list li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); min-width: 0; }
+ul.list li:first-child { border-top: 0; }
+ul.list .txt { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+li.done .txt { color: var(--done); text-decoration: line-through; }
+input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
+.x { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 4px 6px; border-radius: 4px; }
+.x:hover { color: var(--danger); }
+.empty { color: var(--muted); font-size: 14px; padding: 6px 0; }
+.link-url { font: 400 12px/1.3 var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+
+form.add { display: flex; gap: 8px; flex-wrap: wrap; }
+form.add input { flex: 1 1 160px; min-width: 0; }
+input[type="text"], input[type="url"], textarea {
+  font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px;
+}
+textarea { width: 100%; min-height: 200px; resize: vertical; line-height: 1.6; }
+button.btn { font: 600 14px/1 var(--body); background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 6px; padding: 10px 14px; cursor: pointer; }
+button.ghost { font: 500 13px/1 var(--body); background: none; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; cursor: pointer; }
+button.ghost:hover { color: var(--ink); }
+.foot { color: var(--muted); font-size: 13px; }
+@media (prefers-reduced-motion: no-preference) { ul.list li { transition: background .15s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow" id="greet">Good day</div>
+      <h1>Home Base</h1>
+    </div>
+    <div class="clock">
+      <div class="time" id="time">--:--</div>
+      <div class="date" id="date"></div>
+      <div class="status" id="status">Connecting to your saved data…</div>
+    </div>
+  </header>
+
+  <div class="board">
+    <div class="col">
+      <section class="panel" aria-labelledby="h-proj">
+        <div class="panel-head"><h2 id="h-proj">Projects</h2><span class="count">3 repos</span></div>
+        <div class="projects">
+          <div class="proj">
+            <span class="dot" title="Live"></span>
+            <b>Kaido Maps</b>
+            <div class="meta">
+              <a href="https://drivez.webb-home.workers.dev" target="_blank" rel="noopener">Open live app</a>
+              <a href="https://github.com/ckwebb2187/drivez" target="_blank" rel="noopener">Repo</a>
+              <a href="https://github.com/ckwebb2187/drivez/blob/main/plan/ROADMAP.md" target="_blank" rel="noopener">Roadmap</a>
+            </div>
+          </div>
+          <div class="proj">
+            <span class="dot idle" title="Repo"></span>
+            <b>Screen Pet</b>
+            <div class="meta"><a href="https://github.com/ckwebb2187/screen-pet" target="_blank" rel="noopener">Repo</a></div>
+          </div>
+          <div class="proj">
+            <span class="dot idle" title="Repo"></span>
+            <b>Home Base</b>
+            <div class="meta"><a href="https://github.com/ckwebb2187/home-base-" target="_blank" rel="noopener">Repo</a></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-links">
+        <div class="panel-head"><h2 id="h-links">Quick links</h2><span class="count" id="link-count"></span></div>
+        <ul class="list" id="links"></ul>
+        <form class="add" id="link-form">
+          <input type="text" id="link-name" placeholder="Name" aria-label="Link name" required>
+          <input type="url" id="link-url" placeholder="https://…" aria-label="Link address" required>
+          <button class="btn" type="submit">Add link</button>
+        </form>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="panel" aria-labelledby="h-todo">
+        <div class="panel-head">
+          <h2 id="h-todo">To do</h2>
+          <span class="count" id="todo-count"></span>
+        </div>
+        <form class="add" id="todo-form">
+          <input type="text" id="todo-text" placeholder="Add a task and press Enter" aria-label="New task" required>
+          <button class="btn" type="submit">Add</button>
+        </form>
+        <ul class="list" id="todos"></ul>
+        <div><button class="ghost" type="button" id="clear-done" hidden>Clear finished</button></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-notes">
+        <div class="panel-head"><h2 id="h-notes">Notes</h2><span class="count" id="note-state"></span></div>
+        <textarea id="notes" aria-label="Notes" placeholder="Ideas, reminders, things to look up…"></textarea>
+      </section>
+    </div>
+  </div>
+
+  <p class="foot">Your tasks, links and notes are private to you and follow your claude.ai account across devices.</p>
+</div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  let state = { todos: [], links: [], notes: "" };
+  let saveDoc = null;      // db doc when available
+  let mode = "local";      // "db" or "local"
+  const LS = "homebase.v1";
+
+  // Clock
+  function tick() {
+    const d = new Date();
+    $("time").textContent = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    $("date").textContent = d.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+    const h = d.getHours();
+    $("greet").textContent = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  }
+  tick(); setInterval(tick, 15000);
+
+  function setStatus(text, warn) { const s = $("status"); s.textContent = text; s.classList.toggle("warn", !!warn); }
+  const uid = () => Math.random().toString(36).slice(2, 10);
+
+  // Render
+  function render() {
+    const tl = $("todos"); tl.textContent = "";
+    if (!state.todos.length) {
+      const e = document.createElement("li"); e.className = "empty"; e.textContent = "Nothing on the list. Add your first task above."; tl.append(e);
+    }
+    for (const t of state.todos) {
+      const li = document.createElement("li"); if (t.done) li.className = "done";
+      const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = !!t.done; cb.id = "t-" + t.id;
+      cb.setAttribute("aria-label", "Mark done: " + t.text);
+      cb.onchange = () => { t.done = cb.checked; commit(); };
+      const s = document.createElement("label"); s.className = "txt"; s.htmlFor = cb.id; s.textContent = t.text;
+      const x = document.createElement("button"); x.className = "x"; x.type = "button"; x.textContent = "×"; x.setAttribute("aria-label", "Delete task");
+      x.onclick = () => { state.todos = state.todos.filter((o) => o.id !== t.id); commit(); };
+      li.append(cb, s, x); tl.append(li);
+    }
+    const open = state.todos.filter((t) => !t.done).length;
+    $("todo-count").textContent = state.todos.length ? open + " open / " + state.todos.length : "";
+    $("clear-done").hidden = !state.todos.some((t) => t.done);
+
+    const ll = $("links"); ll.textContent = "";
+    if (!state.links.length) {
+      const e = document.createElement("li"); e.className = "empty"; e.textContent = "Save sites you open often. Add one below."; ll.append(e);
+    }
+    for (const l of state.links) {
+      const li = document.createElement("li");
+      const box = document.createElement("div"); box.className = "txt";
+      const a = document.createElement("a"); a.href = l.url; a.target = "_blank"; a.rel = "noopener"; a.textContent = l.name;
+      const u = document.createElement("div"); u.className = "link-url"; u.textContent = l.url.replace(/^https?:\/\//, "");
+      box.append(a, u);
+      const x = document.createElement("button"); x.className = "x"; x.type = "button"; x.textContent = "×"; x.setAttribute("aria-label", "Remove link " + l.name);
+      x.onclick = () => { state.links = state.links.filter((o) => o.id !== l.id); commit(); };
+      li.append(box, x); ll.append(li);
+    }
+    $("link-count").textContent = state.links.length ? state.links.length + " saved" : "";
+
+    const ta = $("notes");
+    if (document.activeElement !== ta && ta.value !== state.notes) ta.value = state.notes || "";
+  }
+
+  // Save: one write at a time, coalesced
+  let saving = false, pending = false;
+  async function commit() {
+    render();
+    if (mode === "local") {
+      try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {}
+      return;
+    }
+    if (saving) { pending = true; return; }
+    saving = true;
+    try {
+      await saveDoc.set({ todos: state.todos, links: state.links, notes: state.notes, updatedAt: Date.now() });
+      $("note-state").textContent = "Saved";
+    } catch (e) {
+      setStatus("Couldn't save. Check your connection and try again.", true);
+    }
+    saving = false;
+    if (pending) { pending = false; commit(); }
+  }
+
+  // Forms
+  $("todo-form").addEventListener("submit", (e) => {
+    e.preventDefault(); const v = $("todo-text").value.trim(); if (!v) return;
+    state.todos.unshift({ id: uid(), text: v, done: false }); $("todo-text").value = ""; commit();
+  });
+  $("link-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = $("link-name").value.trim(); let url = $("link-url").value.trim();
+    if (!name || !url) return;
+    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+    state.links.push({ id: uid(), name, url }); $("link-name").value = ""; $("link-url").value = ""; commit();
+  });
+  $("clear-done").onclick = () => { state.todos = state.todos.filter((t) => !t.done); commit(); };
+  let noteTimer;
+  $("notes").addEventListener("input", (e) => {
+    state.notes = e.target.value; $("note-state").textContent = "Typing…";
+    clearTimeout(noteTimer); noteTimer = setTimeout(commit, 800);
+  });
+
+  // Local fallback load
+  function loadLocal() {
+    try { const raw = localStorage.getItem(LS); if (raw) state = Object.assign(state, JSON.parse(raw)); } catch (e) {}
+    render();
+  }
+  loadLocal();
+
+  // Connect to the private db doc
+  (async function connect() {
+    const [db, user] = await Promise.all([
+      window.claude?.use ? window.claude.use("db") : null,
+      window.claude?.use ? window.claude.use("user") : null,
+    ]);
+    if (!db || !user) { setStatus("Saved on this device only. Sign in to claude.ai to sync.", true); return; }
+    const id = await user.id();
+    if (!id) { setStatus("Saved on this device only.", true); return; }
+    saveDoc = db.collection("data/users/" + id).doc("home");
+    let loaded = false;
+    const timer = setTimeout(() => { if (!loaded) setStatus("Can't reach your saved data yet. Showing this device's copy.", true); }, 10000);
+    saveDoc.onSnapshot((snap) => {
+      if (!snap.fromCache) { clearTimeout(timer); }
+      if (!loaded && !snap.exists) {
+        // First visit: carry over anything typed on this device
+        loaded = true; mode = "db"; setStatus("Synced to your account");
+        if (state.todos.length || state.links.length || state.notes) commit();
+        return;
+      }
+      loaded = true; mode = "db";
+      const d = snap.data() || {};
+      state = { todos: Array.isArray(d.todos) ? d.todos : [], links: Array.isArray(d.links) ? d.links : [], notes: typeof d.notes === "string" ? d.notes : "" };
+      setStatus(snap.fromCache ? "Showing saved copy, syncing…" : "Synced to your account");
+      render();
+    }, () => { clearTimeout(timer); mode = "local"; setStatus("Sync is unavailable. Saving on this device only.", true); });
+  })();
+})();
+</script>
