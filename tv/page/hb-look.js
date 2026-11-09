@@ -78,8 +78,12 @@ window.HBLook = window.HBLook || (() => {
   const SPEED = [['slow', 'Slow'], ['normal', 'Normal'], ['fast', 'Fast']];
   const FUN = [['calm', 'Calm'], ['playful', 'Playful'], ['party', 'Party']];
   const ART = [['theme', 'In my colors'], ['real', 'Original app art']];
-  const FEEL = { tilt: ON, sheen: ON, glass: ON, drift: ON, tod: ON, wx: ON, holi: HOLI, snd: ON, vol: VOL, strip: ON, boot: ON, kb: ON, kbSpeed: SPEED, fun: FUN, art: ART };
-  const FEEL_DEF = { tilt: 'on', sheen: 'on', glass: 'on', drift: 'on', tod: 'off', wx: 'off', holi: 'subtle', snd: 'off', vol: 'low', strip: 'on', boot: 'on', kb: 'on', kbSpeed: 'normal', fun: 'calm', art: 'theme' };
+  const MUSIC = [['zen', 'Zen meditation'], ['piano', 'Soft piano'], ['dreamy', 'Dreamy ambient'], ['calm', 'Calm & peaceful'], ['night', 'Night & starlight'],
+    ['hope', 'Bright & hopeful'], ['lounge', 'Lounge jazz'], ['acoustic', 'Easy acoustic'], ['mix', 'Shuffle everything'], ['off', 'No music']];
+  const LAYOUT = [['classic', 'Classic'], ['mirror', 'Mirrored'], ['center', 'Centered'], ['minimal', 'Minimal'], ['panel', 'Side panel'], ['glance', 'Glance bar'], ['magazine', 'Magazine']];
+  const SNDSET = [['soft', 'Soft'], ['click', 'Click'], ['bubble', 'Bubble'], ['chime', 'Chime'], ['retro', 'Retro'], ['wood', 'Wood'], ['space', 'Space']];
+  const FEEL = { tilt: ON, sheen: ON, glass: ON, drift: ON, tod: ON, wx: ON, holi: HOLI, layout: LAYOUT, live: ON, snd: ON, sndSet: SNDSET, vol: VOL, music: MUSIC, musicVol: VOL, strip: ON, boot: ON, kb: ON, kbSpeed: SPEED, fun: FUN, art: ART };
+  const FEEL_DEF = { tilt: 'on', sheen: 'on', glass: 'on', drift: 'on', tod: 'off', wx: 'off', holi: 'subtle', layout: 'classic', live: 'on', snd: 'off', sndSet: 'soft', vol: 'low', music: 'zen', musicVol: 'mid', strip: 'on', boot: 'on', kb: 'on', kbSpeed: 'normal', fun: 'calm', art: 'theme' };
 
   /* Quick looks: one press sets everything (colors included). Classic clears the part colors. */
   const QUICK = [
@@ -119,7 +123,7 @@ window.HBLook = window.HBLook || (() => {
     else if (key === 'color') { const [part, c] = val; if (isHex(c)) n.colors[part] = c.toUpperCase(); else delete n.colors[part]; n.quick = ''; }
     else if (key === 'colorsReset') { n.colors = {}; n.quick = ''; }
     else if (key === 'recommended') { const keep = n.ts; Object.assign(n, JSON.parse(JSON.stringify(DEF)), JSON.parse(JSON.stringify(QUICK[0][2])), { quick: 'classic', colors: {}, ts: keep }); }
-    else if (LISTS[key]) { n[key] = val; if (!NOT_LOOK.has(key)) n.quick = ''; }
+    else if (LISTS[key]) { n[key] = val; if (!NOT_LOOK.has(key)) n.quick = ''; if (key === 'sndSet') n.snd = 'on'; }
     n.ts = Date.now();
     return norm(n);
   }
@@ -577,7 +581,7 @@ html.hbx-perf .mo-neongrid .ng-haze,html.hbx-perf .mo-neongrid .ng-sun{filter:no
     R.classList.toggle('hbx-perf', !!H.perf());
     R.dataset.hbxPress = L.press;
     ['tilt', 'sheen', 'glass', 'drift', 'tod', 'wx', 'strip', 'boot', 'kb'].forEach(k => R.classList.toggle('hbx-' + k, L[k] === 'on'));
-    R.dataset.hbxHoli = L.holi; R.dataset.hbxFun = L.fun;
+    R.dataset.hbxHoli = L.holi; R.dataset.hbxFun = L.fun; R.dataset.hbxLayout = L.layout;
     if (rootEl) { const css = rootCss(); if (rootEl.textContent !== css) rootEl.textContent = css; }
     paint();
     mountMotion();
@@ -589,7 +593,7 @@ html.hbx-perf .mo-neongrid .ng-haze,html.hbx-perf .mo-neongrid .ng-sun{filter:no
   /* What the TV app needs for its own tiles: glow style, which tiles, strength, press effect and the colors. */
   function fxForApp() {
     const c = PAINTED || {};
-    return { btn: L.btn, which: L.which, str: L.str, press: L.press, glow: L.colors.glow ? c.glow : '', tilt: L.tilt, sheen: L.sheen, snd: L.snd, vol: L.vol, art: L.art };
+    return { btn: L.btn, which: L.which, str: L.str, press: L.press, glow: L.colors.glow ? c.glow : '', tilt: L.tilt, sheen: L.sheen, live: L.live, snd: L.snd, sndSet: L.sndSet, vol: L.vol, music: L.music, musicVol: L.musicVol, art: L.art };
   }
   /* A press on a remote: the pressed element does the chosen press effect. */
   function press(el) {
@@ -610,6 +614,12 @@ html.hbx-perf .mo-neongrid .ng-haze,html.hbx-perf .mo-neongrid .ng-sun{filter:no
 .hbx-pv .pv-scene .hbx-tx{font-size:1.5em}.hbx-pv .pv-scene .hbx-cd{width:100%;height:78%}
 .hbx-pv .pv-pal{width:42%;aspect-ratio:1}
 .hbx-pv .pv-off{opacity:.6;font-weight:700}
+.hbx-pv .pv-lay{position:absolute;inset:0}.hbx-pv .pv-lay i{position:absolute;border-radius:4px}
+.hbx-pv .pv-lay .ck{background:var(--pv-ink,#eef2ef);opacity:.85;border-radius:3px}.hbx-pv .pv-lay .ck.thin{opacity:.5}
+.hbx-pv .pv-lay .tx{background:var(--hbx-glow);opacity:.8}
+.hbx-pv .pv-lay .cd{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-top-color:rgba(255,255,255,.3)}.hbx-pv .pv-lay .cd.sq{border-radius:6px 0 0 6px}
+.hbx-pv .pv-lay .lt{left:6%;right:6%;height:12%;background:repeating-linear-gradient(90deg,rgba(255,255,255,.22) 0 15%,transparent 15% 18%)}
+.hbx-pv .pv-lay .lt.lv{background:repeating-linear-gradient(90deg,rgba(255,80,80,.45) 0 11%,transparent 11% 14%)}
 .hbx-pv .pv-snd{width:30%;aspect-ratio:1;color:var(--hbx-glow);position:relative}.hbx-pv .pv-snd svg{width:100%;height:100%}.hbx-pv .pv-snd.off{color:currentColor;opacity:.6}
 .hbx-pv .pv-snd.off::after{content:'';position:absolute;left:-6%;right:-6%;top:50%;height:2px;background:currentColor;rotate:-35deg}
 .hbx-pv .pv-big{font-size:2.2em;line-height:1}.hbx-pv .pv-dim{opacity:.55;font-size:1.6em}
@@ -702,6 +712,11 @@ html.hbx-perf .hbx-opt:not(.on):not(:hover) .hbx-pv *{animation-play-state:pause
       case 'wx': return on ? '<div class="hbx-pv pv-rainbox"><i class="pv-rain"></i><span class="pv-big">🌧</span></div>' : `<div class="hbx-pv">${OFF}</div>`;
       case 'holi': return id === 'off' ? `<div class="hbx-pv">${OFF}</div>` : `<div class="hbx-pv"><span class="pv-big${id === 'full' ? '' : ' pv-dim'}">${id === 'full' ? '🎃 🎄 🎉' : '🎃'}</span></div>`;
       case 'snd': return `<div class="hbx-pv"><span class="pv-snd${on ? '' : ' off'}">${ICONS.sound}</span></div>`;
+      case 'music': return `<div class="hbx-pv"><span class="pv-big" style="font-size:1.7em">${{ zen: '🪷', piano: '🎹', dreamy: '✨', calm: '🌿', night: '🌙', hope: '🌅', lounge: '🎷', acoustic: '🎸', mix: '🔀', off: '🔇' }[id] || '♪'}</span></div>`;
+      case 'musicVol': return feelPreview('vol', id);
+      case 'layout': return layoutPreview(id);
+      case 'live': return on ? '<div class="hbx-pv"><div class="pv-lay"><i class="lt" style="bottom:30%"></i><i class="lt lv" style="bottom:8%"></i></div></div>' : '<div class="hbx-pv"><div class="pv-lay"><i class="lt" style="bottom:8%"></i></div></div>';
+      case 'sndSet': return `<div class="hbx-pv"><span class="pv-big" style="font-size:1.5em;font-weight:800;letter-spacing:.04em;color:var(--hbx-glow)">${{ soft: '∿', click: '•|•', bubble: '○ ◦', chime: '♪ ♫', retro: '▚▞', wood: '♩', space: '〰' }[id] || '♪'}</span></div>`;
       case 'vol': return `<div class="hbx-pv"><span class="pv-bars">${[1, 2, 3].map(n => `<i class="${n <= (id === 'low' ? 1 : id === 'mid' ? 2 : 3) ? 'on' : ''}" style="height:${n * 28}%"></i>`).join('')}</span></div>`;
       case 'strip': return on ? '<div class="hbx-pv"><span class="pv-strip">☁ 54° · ▂▄▆ · 2 home</span></div>' : `<div class="hbx-pv">${OFF}</div>`;
       case 'boot': return on ? '<div class="hbx-pv"><span class="pv-logo">⌂</span></div>' : `<div class="hbx-pv">${OFF}</div>`;
@@ -711,6 +726,20 @@ html.hbx-perf .hbx-opt:not(.on):not(:hover) .hbx-pv *{animation-play-state:pause
         : '<div class="hbx-pv"><div class="pv-stripes"><i style="background:var(--hbx-glow)"></i><i style="background:color-mix(in srgb,var(--hbx-glow) 60%,#000)"></i><i style="background:var(--hbx-hi)"></i><i style="background:color-mix(in srgb,var(--hbx-glow) 40%,#fff)"></i></div></div>';
     }
     return '<div class="hbx-pv"></div>';
+  }
+  /* Layouts: a tiny diagram of the screen (clock, card, app row). */
+  function layoutPreview(id) {
+    const b = (x, y, w, h, cls) => `<i class="${cls}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"></i>`;
+    const P = {
+      classic: b(6, 10, 30, 18, 'ck') + b(6, 32, 22, 5, 'tx') + b(54, 8, 40, 46, 'cd'),
+      mirror: b(64, 10, 30, 18, 'ck') + b(72, 32, 22, 5, 'tx') + b(6, 8, 40, 46, 'cd'),
+      center: b(32, 6, 36, 20, 'ck') + b(39, 29, 22, 5, 'tx') + b(8, 40, 26, 18, 'cd') + b(37, 40, 26, 18, 'cd') + b(66, 40, 26, 18, 'cd'),
+      minimal: b(6, 30, 42, 26, 'ck') + b(6, 60, 24, 5, 'tx'),
+      panel: b(6, 10, 30, 18, 'ck') + b(6, 32, 22, 5, 'tx') + b(64, 0, 36, 66, 'cd sq'),
+      glance: b(5, 8, 90, 14, 'cd') + b(8, 10, 16, 10, 'ck') + b(8, 34, 26, 22, 'cd') + b(37, 34, 26, 22, 'cd') + b(66, 34, 26, 22, 'cd'),
+      magazine: b(6, 8, 18, 3, 'tx') + b(6, 14, 46, 30, 'ck thin') + b(60, 12, 34, 40, 'cd')
+    };
+    return `<div class="hbx-pv"><div class="pv-lay">${P[id] || ''}<i class="lt" style="bottom:8%"></i></div></div>`;
   }
   /* For a color part: a tiny screen with that part outlined. */
   function partPreview(part) {
@@ -726,6 +755,7 @@ html.hbx-perf .hbx-opt:not(.on):not(:hover) .hbx-pv *{animation-play-state:pause
   /* Section icons (simple line drawings in the text color). */
   const ic = d => `<svg class="hbx-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const ICONS = {
+    layout: ic('<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 15h17M12 4.5V15"/>'),
     quick: ic('<path d="M12 3l2.4 5.6L20 9.2l-4.3 3.9 1.2 5.9L12 16l-4.9 3 1.2-5.9L4 9.2l5.6-.6z"/>'),
     colors: ic('<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.6-.8 1.6-1.6 0-1.2-1-1.4-1-2.4 0-.9.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>'),
     clock: ic('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
@@ -740,6 +770,7 @@ html.hbx-perf .hbx-opt:not(.on):not(:hover) .hbx-pv *{animation-play-state:pause
   /* ---------- the menu: groups and their options, shared by the wall's Settings (Look & feel) and the TV's Style panel ---------- */
   const SECTIONS = [
     { id: 'quick', name: 'Quick looks', hint: 'One press sets everything', groups: [{ key: 'quick', name: 'Quick looks', opts: QUICK.map(q => [q[0], q[1]]) }] },
+    { id: 'layout', name: 'Layout', hint: 'How the home screen is arranged', groups: [{ key: 'layout', name: 'Layout', opts: LAYOUT }, { key: 'live', name: 'Live TV row', opts: ON }] },
     { id: 'colors', name: 'Colors', hint: 'Your own color for each part', groups: [{ key: 'part', name: 'Pick a part, then a color', opts: PARTS }] },
     { id: 'clock', name: 'Clock & date', hint: 'Styles and number animations', groups: [
       { key: 'clock', name: 'Clock style', opts: TEXT_FX }, { key: 'clockAnim', name: 'When the minute changes', opts: TICKS },
@@ -758,7 +789,8 @@ html.hbx-perf .hbx-opt:not(.on):not(:hover) .hbx-pv *{animation-play-state:pause
     { id: 'fun', name: 'Fun', hint: 'Characters that visit now and then', groups: [{ key: 'fun', name: 'Fun level', opts: FUN }, { key: 'palsOften', name: 'How often they visit', opts: OFTEN }] }
   ];
   /* Screen & sound settings (the TV adds these as their own section; the wall can show them under Screen & sound). */
-  const SCREEN = [{ key: 'snd', name: 'Navigation sounds', opts: ON }, { key: 'vol', name: 'Sound volume', opts: VOL },
+  const SCREEN = [{ key: 'snd', name: 'Navigation sounds', opts: ON }, { key: 'sndSet', name: 'Sound pack (picking one turns sounds on)', opts: SNDSET }, { key: 'vol', name: 'Sound volume', opts: VOL },
+    { key: 'music', name: 'Ambient music · real recordings by Kevin MacLeod (incompetech.com), CC BY 4.0', opts: MUSIC }, { key: 'musicVol', name: 'Music volume', opts: VOL },
     { key: 'strip', name: 'Status strip (weather, Wi-Fi, who\'s home)', opts: ON }, { key: 'boot', name: 'Startup animation', opts: ON },
     { key: 'kb', name: 'Screensaver photo zoom', opts: ON }, { key: 'kbSpeed', name: 'Screensaver speed', opts: SPEED }, { key: 'art', name: 'App tiles', opts: ART }];
   const cur = key => key === 'quick' ? L.quick : L[key];

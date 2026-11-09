@@ -119,7 +119,7 @@ function panelOpen() {
   if (!p) {
     p = document.createElement('div'); p.id = 'sty'; document.body.appendChild(p);
     const secs = tvSections();
-    p.innerHTML = `<div class="sty-card"><div class="sty-h"><b>Style & settings</b><span>${MODE === 'style' ? 'Tap a tile, or use the arrow keys' : '▲▼ section · ▶ / OK in · OK picks · Back out'} · <em class="sty-ver">Page 13.0</em></span></div>
+    p.innerHTML = `<div class="sty-card"><div class="sty-h"><b>Style & settings</b><span>${MODE === 'style' ? 'Tap a tile, or use the arrow keys' : '▲▼ section · ▶ / OK in · OK picks · Back out'} · <em class="sty-ver">Page 13.1</em></span></div>
       <div class="sty-body"><nav class="sty-nav">${secs.map((s, i) => `<div class="sty-ni" data-s="${i}">${s.icon || ''}<b>${esc(s.name)}</b><span>${esc(s.hint || '')}</span></div>`).join('')}</nav><div class="sty-pane"></div></div></div>`;
     p.addEventListener('click', e => {
       const ni = e.target.closest('.sty-ni'); if (ni) { panelShow(+ni.dataset.s); PANEL.zone = 'nav'; panelFocus(); return; }
@@ -133,7 +133,7 @@ function panelOpen() {
 function panelClose() {
   if (MODE === 'style') return;   /* the style page is only the panel */
   PANEL.open = false; document.body.classList.add('sty-closing');
-  clearTimeout(PANEL.closeT); PANEL.closeT = setTimeout(() => { if (!PANEL.open) document.body.classList.remove('sty-open', 'sty-closing'); }, 250);
+  clearTimeout(PANEL.closeT); PANEL.closeT = setTimeout(() => { if (!PANEL.open) document.body.classList.remove('sty-open', 'sty-closing'); }, 150);
   if (PANEL.tilesLater) { const t = PANEL.tilesLater; PANEL.tilesLater = null; setTimeout(() => sendTileTheme(...t), 350); }
   try { HB_APP && typeof HB_APP.panel === 'function' && HB_APP.panel(false); } catch (e) {}
 }
@@ -143,7 +143,6 @@ function panelShow(i) {
   Object.values(PANEL.built).forEach(el => { const on = el === sec; if (el.classList.contains('show') !== on) el.classList.toggle('show', on); });
   $('#sty').querySelectorAll('.sty-ni').forEach(ni => ni.classList.toggle('cur', +ni.dataset.s === PANEL.s));
   $('#sty .sty-pane').scrollTop = 0;
-  HBLook.lock();
 }
 /* Moves the remote's focus: a nav line, or a tile in the section showing. */
 function panelFocus(tile) {
@@ -212,7 +211,7 @@ function updHint() {
 function snd(kind) { try { if (HB_APP && typeof HB_APP.snd === 'function') HB_APP.snd(kind); } catch (e) {} }
 window.hbKey = k => {
   const used = hbKey0(k);
-  if (used) snd(k === 'ok' || (k === 'menu' && PANEL.open) ? 'ok' : k === 'back' || !PANEL.open ? 'back' : 'move');
+  if (used) snd(k === 'menu' ? (PANEL.open ? 'menu' : 'back') : k === 'ok' ? 'ok' : k === 'back' || !PANEL.open ? 'back' : 'move');
   return used;
 };
 function hbKey0(k) {

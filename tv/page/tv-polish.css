@@ -129,3 +129,70 @@ html.hbx-perf #wxfx .sf:nth-child(n+13), html.hbx-perf #wxfx .rd:nth-child(n+19)
 .sty-ni b, .sty-ni span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
 .sty-ni b { font-size:2.1vh } .sty-ni span { font-size:1.3vh }
 .sty-nav { gap:var(--s1); padding:var(--s2) var(--s2) }
+/* ---------- Style panel: condensed and snappy ----------
+   Narrower card, slimmer section list (names only), smaller tiles so more fit per row, and quick motion:
+   the panel slides in in 180 ms, focus moves in 90 ms, sections switch instantly. */
+.sty-card { width:min(60vw, 1250px); animation-duration:180ms }
+#sty { animation-duration:120ms }
+body.sty-closing .sty-card, body.sty-closing #sty { transition-duration:150ms }
+.sty-h { padding:var(--s3) var(--s3) var(--s1) }
+.sty-h b { font-size:3vh } .sty-h span { font-size:1.4vh }
+.sty-body { grid-template-columns:16.5vw minmax(0, 1fr) }
+.sty-nav { padding:var(--s1); gap:2px }
+.sty-ni { padding:.9vh 1.2vh; border-radius:1.2vh; column-gap:var(--s1); grid-template-columns:2.4vh minmax(0, 1fr) }
+.sty-ni b { font-size:1.9vh } .sty-ni span { display:none } .sty-ni .hbx-ic { width:2.4vh; height:2.4vh; grid-row:auto }
+.sty-pane { padding:var(--s1) var(--s2) var(--s3) }
+.sty-sh { margin:.2vh .2vh .8vh } .sty-sh b { font-size:2.4vh } .sty-sh span { font-size:1.4vh }
+.sty-g { margin-bottom:1.6vh }
+.sty-gh { margin:0 .2vh .6vh } .sty-gh b, .sty-gv { font-size:1.4vh }
+.sty-grid { grid-template-columns:repeat(auto-fill, minmax(8.4vw, 1fr)); gap:1vh }
+.sty-grid.cp { grid-template-columns:repeat(auto-fill, minmax(6.6vw, 1fr)); gap:.8vh }
+.sty-grid.sw { grid-template-columns:repeat(auto-fill, minmax(4.4vw, 1fr)); gap:.8vh }
+.hbx-opt { padding:.4vh; gap:.3vh; font-size:1.45vh; border-radius:1.1vh }
+.hbx-opt .hbx-pvw, .hbx-opt .hbx-pv { border-radius:.9vh }
+.hbx-ck { top:.8vh; right:.8vh; width:2vh; height:2vh; font-size:1.2vh }
+.hbx-opt.cp .hbx-pv { aspect-ratio:3.8 }
+.sty-sec.show { animation:none }
+.hbx-opt, .sty-ni, .hbx-ck, .hbx-opt .hbx-pvw { transition-duration:90ms !important }
+html.hbx-sheen #sty .hbx-opt.on .hbx-pvw::after { animation-duration:250ms }
+
+/* ---------- Layouts (Style → Layout) ----------
+   The same pieces arranged seven ways. Home screen only; the screensaver keeps its own arrangement.
+   --row is set by the app (the top of its app rows), so nothing ever runs behind them. */
+html[data-hbx-layout="mirror"] body.home #wrap { grid-template-columns:minmax(0, .92fr) minmax(0, 1fr) }
+html[data-hbx-layout="mirror"] body.home .left { order:2; align-items:flex-end; text-align:right }
+html[data-hbx-layout="mirror"] body.home #wx { flex-direction:row-reverse }
+
+html[data-hbx-layout="center"] body.home #wrap, html[data-hbx-layout="glance"] body.home #wrap { grid-template-columns:minmax(0, 1fr); grid-template-rows:auto minmax(0, 1fr); gap:var(--s3) }
+html[data-hbx-layout="center"] body.home .left { align-items:center; text-align:center }
+html[data-hbx-layout="center"] body.home .right, html[data-hbx-layout="glance"] body.home .right { background:none; border:0; box-shadow:none; padding:0; overflow:visible; -webkit-backdrop-filter:none; backdrop-filter:none }
+html[data-hbx-layout="center"] body.home .right::before, html[data-hbx-layout="center"] body.home .right::after,
+html[data-hbx-layout="glance"] body.home .right::before, html[data-hbx-layout="glance"] body.home .right::after,
+html[data-hbx-layout="center"] body.home .right > .lbl:first-child, html[data-hbx-layout="glance"] body.home .right > .lbl:first-child { display:none }
+html[data-hbx-layout="center"] body.home #up, html[data-hbx-layout="glance"] body.home #up { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:var(--s2); margin:0 }
+html[data-hbx-layout="center"] body.home .ev, html[data-hbx-layout="glance"] body.home .ev { border:1px solid var(--line); border-top-color:rgba(255,255,255,.16); border-radius:var(--s2); padding:var(--s2) var(--s3) var(--s2) var(--s2); background:var(--card) }
+html[data-hbx-layout="center"] body.home .ev:nth-child(n+4), html[data-hbx-layout="glance"] body.home .ev:nth-child(n+4) { display:none }
+html[data-hbx-layout="center"] body.home .ev.first .what, html[data-hbx-layout="glance"] body.home .ev.first .what { font-size:3.2vh }
+html[data-hbx-layout="center"] body.home #dinner, html[data-hbx-layout="center"] body.home #chores { justify-content:center }
+html[data-hbx-layout="center"] body.home #clock { font-size:16vh }
+
+html[data-hbx-layout="glance"] body.home .left { flex-direction:row; align-items:center; gap:var(--s4); padding:var(--s2) var(--s4); border-radius:var(--s3);
+  background:var(--card); border:1px solid var(--line); border-top-color:rgba(255,255,255,.16) }
+html[data-hbx-layout="glance"] body.home #clock { font-size:9vh }
+html[data-hbx-layout="glance"] body.home #date, html[data-hbx-layout="glance"] body.home #wx { margin:0 }
+html[data-hbx-layout="glance"] body.home #pstrip { display:none }
+
+html[data-hbx-layout="minimal"] body.home .right { display:none }
+html[data-hbx-layout="minimal"] body.home .left { justify-content:flex-end }
+html[data-hbx-layout="minimal"] body.home #clock { font-size:24vh }
+html[data-hbx-layout="minimal"] body.home #next { display:block }
+
+html[data-hbx-layout="panel"] body.home .right { position:fixed; top:0; right:0; bottom:var(--row); width:36vw; max-height:none; border-radius:var(--s3) 0 0 var(--s3); border-right:0;
+  padding:calc(var(--s4) * 1.5) var(--s4) var(--s3) }
+html[data-hbx-layout="panel"] body.home #pstrip { right:calc(36vw + var(--s3)) }
+
+html[data-hbx-layout="magazine"] body.home .left { padding-top:var(--s2) }
+html[data-hbx-layout="magazine"] body.home #date { order:-1; margin:0 0 var(--s2); font:700 1.9vh/1 var(--f-body); letter-spacing:.32em; text-transform:uppercase; color:var(--ink2); text-shadow:none }
+html[data-hbx-layout="magazine"] body.home #clock { font-size:22vh; font-weight:300; letter-spacing:-.06em }
+html[data-hbx-layout="magazine"] body.home #wrap { grid-template-columns:minmax(0, 1.2fr) minmax(0, .8fr) }
+html[data-hbx-layout="magazine"] body.home .ev .what { font-weight:500 }

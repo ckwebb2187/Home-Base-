@@ -60,6 +60,17 @@ public class HomeActivity extends Activity {
     private WebView web;
     private LinearLayout row;
     private HorizontalScrollView scroller;
+    /** The Live TV row along the bottom (live channel apps), under the main app row. Style → Layout → Live TV row. */
+    private HorizontalScrollView liveScroller;
+    private LinearLayout liveRow;
+    private TextView liveHead;
+    private int scrH, liveW, liveH;
+    private String fxLive = "on";
+    private static final Set<String> LIVE = new HashSet<>(Arrays.asList(
+            "tv.pluto.android", "com.tubitv", "com.roku.web.trc", "com.cbs.ott", "com.smarterspro.smartersprotv", "com.google.android.tv",
+            "com.google.android.youtube.tvunplugged", "com.sling", "com.fubo.firetv.screen", "com.fubotv.android", "com.philo.philo.google", "com.frndlytv.android",
+            "com.haystack.android", "com.cbsnews.ott", "com.newsy.newsy", "com.xumo.xumo.tv", "com.samsung.android.tvplus", "com.plexapp.android", "com.localnow.android"));
+    private static boolean isLive(String pkg) { return LIVE.contains(pkg) || pkg.startsWith("com.raycom.") || pkg.startsWith("com.graymedia.") || pkg.startsWith("com.nexstar."); }
     private TextView label;
     private int tileW, tileH;
     private String loadedFor = "";
@@ -91,7 +102,7 @@ public class HomeActivity extends Activity {
     /** The look's button settings, sent by the page (HBLook.fx): glow style, which tiles glow, strength, press effect. */
     private String fxBtn = "soft", fxWhich = "sel", fxStr = "normal", fxPress = "push", fxJson = "";
     /** The feel switches from Style: tilt toward you, light sheen, navigation sounds (and volume), tile art. */
-    private String fxTilt = "on", fxSheen = "on", fxSnd = "off", fxVol = "low", fxArt = "theme";
+    private String fxTilt = "on", fxSheen = "on", fxSnd = "off", fxSndSet = "soft", fxVol = "low", fxArt = "theme", fxMusic = "zen", fxMusicVol = "mid";
     /** The one easing every animation uses (the page's cubic-bezier(.2,.8,.2,1)); 150 / 250 / 400 ms. */
     private static final android.view.animation.Interpolator EASE = new android.view.animation.PathInterpolator(0.2f, 0.8f, 0.2f, 1f);
     /** Which way the last arrow press went (-1 left, 1 right), so a newly focused tile tilts in from that side. */
@@ -107,7 +118,7 @@ public class HomeActivity extends Activity {
     private void sound(String kind) {
         if (!"on".equals(fxSnd)) return;
         if (snd == null) snd = new Snd(this);
-        snd.play(kind, fxVol);
+        snd.play(kind, fxSndSet, fxVol);
     }
     private int fxGlow = 0;
     private float fxK() { return "subtle".equals(fxStr) ? 0.6f : "strong".equals(fxStr) ? 1.6f : 1f; }
@@ -197,7 +208,7 @@ public class HomeActivity extends Activity {
             @JavascriptInterface public void fx(final String json) { ui.post(() -> setFx(json)); }
             @JavascriptInterface public void snd(final String kind) { ui.post(() -> sound(kind)); }
             @JavascriptInterface public String net() { return netState(); }
-            @JavascriptInterface public void ready() { ui.post(() -> fallback.animate().alpha(0f).setDuration(400).withEndAction(() -> fallback.setVisibility(View.GONE)).start()); }
+            @JavascriptInterface public void ready() { ui.post(() -> sendRowTop()); ui.post(() -> fallback.animate().alpha(0f).setDuration(400).withEndAction(() -> fallback.setVisibility(View.GONE)).start()); }
         }, "HomeBaseTVApp");
         root.addView(web, new FrameLayout.LayoutParams(-1, -1));
 
@@ -218,6 +229,30 @@ public class HomeActivity extends Activity {
         FrameLayout.LayoutParams sp = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
         sp.bottomMargin = Math.round(H * 0.075f);
         root.addView(scroller, sp);
+        scrH = H; liveW = Math.round(tileW * 0.78f); liveH = Math.round(tileH * 0.78f);
+        liveScroller = new HorizontalScrollView(this);
+        liveScroller.setHorizontalScrollBarEnabled(false);
+        liveScroller.setClipToPadding(false);
+        liveScroller.setClipChildren(false);
+        liveScroller.setSmoothScrollingEnabled(true);
+        liveScroller.setPadding(pad, Math.round(liveH * 0.12f), pad, Math.round(liveH * 0.12f));
+        liveRow = new LinearLayout(this);
+        liveRow.setOrientation(LinearLayout.HORIZONTAL);
+        liveRow.setClipChildren(false);
+        liveRow.setClipToPadding(false);
+        liveScroller.addView(liveRow, new FrameLayout.LayoutParams(-2, -2));
+        root.addView(liveScroller, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
+        liveHead = new TextView(this);
+        android.text.SpannableString lh = new android.text.SpannableString("\u25CF  LIVE TV");
+        lh.setSpan(new android.text.style.ForegroundColorSpan(Color.rgb(255, 77, 77)), 0, 1, 0);
+        liveHead.setText(lh);
+        liveHead.setTextColor(Color.argb(210, 238, 242, 239));
+        liveHead.setTextSize(TypedValue.COMPLEX_UNIT_PX, H * 0.018f);
+        liveHead.setLetterSpacing(0.2f);
+        liveHead.setTypeface(Hb.body(this, true));
+        FrameLayout.LayoutParams hp = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.START);
+        hp.leftMargin = pad;
+        root.addView(liveHead, hp);
 
         label = new TextView(this);
         label.setTextColor(Color.argb(230, 238, 242, 239));
@@ -242,6 +277,7 @@ public class HomeActivity extends Activity {
         kp.rightMargin = pad; kp.bottomMargin = Math.round(H * 0.022f);
         corner.setVisibility("corner".equals(gearPlace) ? View.VISIBLE : View.GONE);
         root.addView(corner, kp);
+        placeRows();
 
         setContentView(root);
         android.content.IntentFilter pf = new android.content.IntentFilter();
@@ -260,7 +296,7 @@ public class HomeActivity extends Activity {
         else { web.evaluateJavascript("window.hbRefresh && hbRefresh()", null); if (bootPending) playBoot(); }
         toSaver = false;
         ui.removeCallbacks(zenSleep);
-        if (zen == null) zen = new Zen(this);
+        if (zen == null) { zen = new Zen(this); zen.setMode(fxMusic, fxMusicVol); }
         zen.play();
         web.onResume();
         // The app row is only rebuilt when apps are installed or removed (or the first time), so Home is instant.
@@ -325,7 +361,7 @@ public class HomeActivity extends Activity {
     private void jsUpdate() {
         Upd.check(this, new Upd.Say() { @Override public void say(final String msg) { ui.post(new Runnable() { @Override public void run() { HomeActivity.this.say(msg); } }); } });
     }
-    private void openStyle() { web.evaluateJavascript("window.hbStyle && hbStyle.open()", null); }
+    private void openStyle() { sound("menu"); web.evaluateJavascript("window.hbStyle && hbStyle.open()", null); }
     private void openSettings() {
         try { startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); } catch (Exception e) { /* nothing on screen; the home screen stays */ }
     }
@@ -338,14 +374,15 @@ public class HomeActivity extends Activity {
     private void setPanel(boolean open) {
         if (open == panelOpen) return;
         panelOpen = open;
-        final View[] parts = { scroller, label, corner };
+        final View[] parts = { scroller, label, corner, liveScroller, liveHead };
         for (View v : parts) {
             if (v == corner && !"corner".equals(gearPlace)) continue;
             v.animate().cancel();
-            if (open) v.animate().alpha(0f).setDuration(160).withEndAction(() -> v.setVisibility(View.INVISIBLE)).start();
-            else { v.setVisibility(View.VISIBLE); v.animate().alpha(1f).setDuration(220).start(); }
+            if (open) v.animate().alpha(0f).setDuration(100).withEndAction(() -> v.setVisibility(View.INVISIBLE)).start();
+            else { v.setVisibility(View.VISIBLE); v.animate().alpha(1f).setDuration(150).start(); }
         }
         if (!open) { View f = row.getFocusedChild(); if (f != null) f.requestFocus(); else if (row.getChildCount() > 0) row.getChildAt(0).requestFocus(); }
+        if (!open) { if (rowDirty) { rowDirty = false; buildRow(); } else placeRows(); }
     }
 
     /** A small rounded button (Style, Settings) that glows in the theme's color when selected. */
@@ -424,18 +461,21 @@ public class HomeActivity extends Activity {
     /** The page's look settings for the app's own buttons (glow style, which glow, strength, press effect, glow color). */
     private void setFx(String json) {
         if (json == null || json.length() > 4000 || json.equals(fxJson)) return;
-        String art = fxArt;
+        String art = fxArt, live = fxLive;
         parseFx(json);
         Hb.prefs(this).edit().putString("tileFx", json).apply();
         for (Runnable r : restyle) r.run();
         if (!art.equals(fxArt)) recolorTiles();
+        if (zen != null) zen.setMode(fxMusic, fxMusicVol);
+        if (!live.equals(fxLive)) { if (panelOpen) rowDirty = true; else buildRow(); }
+        if ("on".equals(fxSnd)) { if (snd == null) snd = new Snd(this); snd.prepare(fxSndSet); }
     }
     private void parseFx(String json) {
         if (json == null || json.isEmpty()) return;
         try {
             org.json.JSONObject o = new org.json.JSONObject(json);
             fxBtn = o.optString("btn", fxBtn); fxWhich = o.optString("which", fxWhich); fxStr = o.optString("str", fxStr); fxPress = o.optString("press", fxPress);
-            fxTilt = o.optString("tilt", fxTilt); fxSheen = o.optString("sheen", fxSheen); fxSnd = o.optString("snd", fxSnd); fxVol = o.optString("vol", fxVol); fxArt = o.optString("art", fxArt);
+            fxTilt = o.optString("tilt", fxTilt); fxSheen = o.optString("sheen", fxSheen); fxSnd = o.optString("snd", fxSnd); fxSndSet = o.optString("sndSet", fxSndSet); fxVol = o.optString("vol", fxVol); fxMusic = o.optString("music", fxMusic); fxLive = o.optString("live", fxLive); fxMusicVol = o.optString("musicVol", fxMusicVol); fxArt = o.optString("art", fxArt);
             String g = o.optString("glow", "");
             fxGlow = g.matches("#[0-9a-fA-F]{6}") ? Color.parseColor(g) : 0;
             fxJson = json;
@@ -456,6 +496,29 @@ public class HomeActivity extends Activity {
         ui.postDelayed(open, 170);
     }
 
+    /** Stacks the rows: the Live TV row at the bottom (when it's on and has apps), the main row above it, and tells the
+     *  page where the rows start so its cards stay clear of them. */
+    private void placeRows() {
+        if (liveScroller == null) return;
+        boolean on = "on".equals(fxLive) && liveRow.getChildCount() > 0 && !panelOpen;
+        int base = Math.round(scrH * 0.075f), liveBlock = Math.round(liveH * 1.24f);
+        liveScroller.setVisibility(on ? View.VISIBLE : View.GONE);
+        liveHead.setVisibility(on ? View.VISIBLE : View.GONE);
+        ((FrameLayout.LayoutParams) liveScroller.getLayoutParams()).bottomMargin = base;
+        ((FrameLayout.LayoutParams) liveHead.getLayoutParams()).bottomMargin = base + liveBlock;
+        int mainBottom = on ? base + liveBlock + Math.round(scrH * 0.035f) : base;
+        ((FrameLayout.LayoutParams) scroller.getLayoutParams()).bottomMargin = mainBottom;
+        root.requestLayout();
+        sendRowTop();
+    }
+    private void sendRowTop() {
+        boolean on = "on".equals(fxLive) && liveRow != null && liveRow.getChildCount() > 0;
+        int base = Math.round(scrH * 0.075f), liveBlock = Math.round(liveH * 1.24f);
+        int top = (on ? base + liveBlock + Math.round(scrH * 0.035f) : base) + Math.round(tileH * 1.24f);
+        float vh = Math.max(30f, top * 100f / scrH + 1.5f);
+        if (web != null) web.evaluateJavascript("document.documentElement.style.setProperty('--row','" + String.format(Locale.US, "%.1f", vh) + "vh')", null);
+    }
+
     private void resetIdle() { ui.removeCallbacks(idle); ui.postDelayed(idle, IDLE_MS); }
 
     // ---------- the app row ----------
@@ -466,15 +529,24 @@ public class HomeActivity extends Activity {
         if (f != null && f.getTag() instanceof String) focusedKey = (String) f.getTag();
         List<Tile> tiles = tiles();
         row.removeAllViews();
+        if (liveRow != null) liveRow.removeAllViews();
         restyle.clear();
         refs.clear();
         if (corner != null) for (int i = 0; i < corner.getChildCount(); i++) { final View c = corner.getChildAt(i); restyle.add(() -> c.getOnFocusChangeListener().onFocusChange(c, c.hasFocus())); }
         int gap = Math.round(tileW * 0.09f);
         View first = null, refocus = null;
         tileN = 0;
+        boolean liveOn = "on".equals(fxLive) && liveRow != null;
         for (Tile t : tiles) {
             View v = tileView(t);
             tileN++;
+            if (liveOn && isLive(t.key)) {
+                LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(liveW, liveH);
+                lp2.rightMargin = Math.round(liveW * 0.09f);
+                liveRow.addView(v, lp2);
+                if (t.key.equals(focusedKey)) refocus = v;
+                continue;
+            }
             LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(tileW, tileH);
             p.rightMargin = gap;
             row.addView(v, p);
@@ -483,6 +555,7 @@ public class HomeActivity extends Activity {
         }
         View target = refocus != null ? refocus : first;
         if (target != null) target.requestFocus();
+        placeRows();
     }
 
     private List<Tile> tiles() {
