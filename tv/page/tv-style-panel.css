@@ -1,0 +1,83 @@
+/* ---------- Style panel (sections on the left, tiles with live previews on the right) ----------
+   One motion language: --hbx-e easing, 150 ms for focus, 250 ms for presses, 400 ms for the card opening. */
+#sty { display:none; position:fixed; inset:0; z-index:20; background:linear-gradient(90deg, transparent 0 22%, rgba(0,0,0,.25) 45%); align-items:center; justify-content:flex-end; padding:0 3vw; box-sizing:border-box }
+body.sty-open #sty { display:flex }
+body.sty-open #lane, body.sty-open .hbx-pal { display:none }
+.sty-card { width:min(72vw, 1500px); height:88vh; display:flex; flex-direction:column; background:color-mix(in srgb, color-mix(in srgb, var(--bg) 85%, #000) 90%, transparent); border:1px solid color-mix(in srgb, var(--accent) 55%, transparent); border-radius:3vh;
+  box-shadow:0 3vh 9vh rgba(0,0,0,.55), 0 0 6vh var(--haloA); overflow:hidden; animation:sty-in 400ms var(--hbx-e) both }
+@keyframes sty-in { from { opacity:0; translate:4vw 0 } to { opacity:1; translate:0 0 } }
+.sty-h { display:flex; align-items:baseline; justify-content:space-between; gap:2vh; padding:2.4vh 3vh 1.6vh; border-bottom:1px solid var(--line) }
+.sty-h b { font:700 4vh/1 var(--f-display); color:var(--ink); text-shadow:0 0 2vh var(--haloA) }
+.sty-h span { font-size:1.7vh; color:var(--ink2) }
+.sty-ver { font-style:normal; color:var(--accent); font-weight:700 }
+.sty-body { flex:1; min-height:0; display:grid; grid-template-columns:19vw minmax(0, 1fr) }
+.sty-nav { overflow:auto; padding:1.4vh 1.2vh; border-right:1px solid var(--line); scrollbar-width:none; display:flex; flex-direction:column; gap:.6vh }
+.sty-ni { position:relative; padding:1.3vh 1.8vh; border-radius:1.6vh; color:var(--ink2); cursor:pointer; transition:background 150ms var(--hbx-e), color 150ms var(--hbx-e), scale 150ms var(--hbx-e) }
+.sty-ni b { display:block; font:700 2.4vh/1.15 var(--f-display) }
+.sty-ni span { display:block; font-size:1.5vh; margin-top:.3vh; opacity:.8 }
+.sty-ni.cur { color:var(--ink); background:color-mix(in srgb, var(--accent) 14%, transparent) }
+.sty-ni.cur::before { content:''; position:absolute; left:0; top:20%; bottom:20%; width:.5vh; border-radius:.5vh; background:var(--accent); box-shadow:0 0 1.4vh var(--accent) }
+.sty-ni.on { color:var(--ink); background:color-mix(in srgb, var(--accent) 26%, transparent); scale:1.03 }
+.sty-pane { overflow:auto; padding:1.6vh 2.4vh 4vh; scrollbar-width:none; scroll-behavior:auto }
+.sty-sec { display:none } .sty-sec.show { display:block; animation:sty-sec 250ms var(--hbx-e) both }
+@keyframes sty-sec { from { opacity:0 } to { opacity:1 } }
+.sty-sh { display:flex; align-items:baseline; gap:2vh; margin:.4vh .4vh 1.4vh }
+.sty-sh b { font:700 3.2vh/1 var(--f-display); color:var(--ink) }
+.sty-sh span { font-size:1.7vh; color:var(--ink2) }
+.sty-g { margin-bottom:2.4vh }
+.sty-gh { display:flex; align-items:baseline; justify-content:space-between; gap:2vh; margin:0 .4vh 1vh }
+.sty-gh b { font-size:1.8vh; letter-spacing:.14em; text-transform:uppercase; color:var(--ink2) }
+.sty-gv { font-size:1.8vh; color:var(--accent); font-weight:700; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60% }
+.sty-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(11.5vw, 1fr)); gap:1.6vh }
+.sty-grid.sw { grid-template-columns:repeat(auto-fill, minmax(6.4vw, 1fr)) }
+.sty-grid.any { grid-template-columns:repeat(24, minmax(0, 1fr)); gap:.6vh }
+.sty-any { margin-top:1.6vh }
+.hbx-opt { position:relative; display:flex; flex-direction:column; gap:.8vh; padding:.8vh; border-radius:1.6vh; cursor:pointer; color:var(--ink2); font-size:1.8vh;
+  transition:scale 150ms var(--hbx-e), background 150ms var(--hbx-e), color 150ms var(--hbx-e) }
+.hbx-opt .hbx-pvw { border-radius:1.2vh; font-size:1.6vh; transition:box-shadow 250ms var(--hbx-e) }
+.hbx-opt .hbx-pv { border-radius:1.2vh; box-shadow:inset 0 0 0 1px rgba(255,255,255,.08) }
+.hbx-opt .hbx-ol { padding:0 .4vh; font-weight:700; line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.hbx-opt.sel { color:var(--ink) }
+.hbx-opt.sel .hbx-ol { color:var(--accent) }
+.hbx-ck { position:absolute; top:1.2vh; right:1.2vh; width:2.6vh; height:2.6vh; border-radius:50%; display:grid; place-items:center; font-size:1.6vh; background:var(--accent); color:var(--bg); opacity:0; scale:.6; transition:opacity 150ms var(--hbx-e), scale 150ms var(--hbx-e) }
+.hbx-opt.sel .hbx-ck { opacity:1; scale:1 }
+.hbx-opt.on { background:color-mix(in srgb, var(--accent) 20%, transparent); color:var(--ink); scale:1.05; z-index:1 }
+.hbx-opt.on .hbx-pvw { box-shadow:0 0 0 .35vh var(--hbx-glow), 0 0 2.4vh var(--hbx-g1) }
+.hbx-opt.sw { padding:.5vh } .hbx-opt.sw .hbx-ol { font-size:1.4vh; text-align:center }
+.hbx-opt.sw .hbx-pv { aspect-ratio:1.4 }
+.hbx-opt.tiny { padding:.25vh; gap:0 } .hbx-opt.tiny .hbx-ol, .hbx-opt.tiny .hbx-ck { display:none } .hbx-opt.tiny .hbx-pv { aspect-ratio:1; border-radius:.6vh }
+.hbx-opt.tiny.sel .hbx-pvw { box-shadow:0 0 0 .3vh #fff }
+.hbx-opt.sw.act .hbx-pv { aspect-ratio:1.4 }
+.sty-note { padding:1.6vh 3vh 2.4vh; font-size:1.9vh; line-height:1.4; color:var(--ink); border-top:1px solid var(--line) }
+/* TV-only tile pictures */
+.hbx-pv .pv-stripes { position:absolute; inset:0; display:flex } .hbx-pv .pv-stripes i { flex:1 } .hbx-pv .pv-stripes i:first-child { flex:1.6 }
+.hbx-pv .pv-tag { position:relative; padding:.3vh 1vh; border-radius:9px; background:rgba(0,0,0,.45); color:#fff; font-weight:700; font-size:1.5vh }
+.hbx-pv .pv-cyc { width:40%; aspect-ratio:1; border-radius:50%; background:conic-gradient(var(--accent), var(--gold), var(--accent)); animation:hbx-spin 8s linear infinite; box-shadow:0 0 2vh var(--haloA) }
+@keyframes hbx-spin { to { rotate:360deg } }
+.hbx-pv .pv-glow { font:800 3.4vh/1 var(--f-display) } .hbx-pv .pv-glow.g1 { text-shadow:0 0 1.6vh var(--haloA) } .hbx-pv .pv-glow.g2 { text-shadow:0 0 .6vh var(--accent), 0 0 2vh var(--haloA) }
+.hbx-pv .pv-glow.g3, .hbx-pv .pv-glow.g5 { text-shadow:0 0 .4vh #fff, 0 0 1vh var(--accent), 0 0 3vh var(--accent) } .hbx-pv .pv-glow.g4 { color:var(--accent); text-shadow:-.15vh 0 cyan, .15vh 0 magenta }
+.hbx-pv .pv-fx { font-weight:800; font-size:2.2vh; text-align:center; padding:0 1vh; color:var(--ink) } .hbx-pv .pv-fx.sm { font-size:1.8vh; line-height:1.2 }
+.hbx-pv .pv-gear { position:relative; width:78%; height:56%; border-bottom:2px solid rgba(255,255,255,.25); display:flex; gap:6%; align-items:flex-end; padding-bottom:6% }
+.hbx-pv .pv-gear i { flex:1; height:60%; border-radius:6px; background:rgba(255,255,255,.2) }
+.hbx-pv .pv-gear b { position:absolute; width:18%; height:24%; border-radius:999px; background:var(--accent); box-shadow:0 0 1vh var(--accent) }
+.hbx-pv .pv-gear.corner b { right:0; bottom:-34% } .hbx-pv .pv-gear.end b { right:0; bottom:6%; height:60% } .hbx-pv .pv-gear.start b { left:0; bottom:6%; height:60% }
+.hbx-pv .pv-gear.start i:first-child { margin-left:22% } .hbx-pv .pv-gear.end i:last-child { margin-right:22% }
+body.style-page .sty-card { width:min(96vw, 1500px) } body.style-page #sty { justify-content:center; background:none }
+@media (max-width:900px) {
+  .sty-card { height:94vh; width:96vw } .sty-body { grid-template-columns:1fr; grid-template-rows:auto 1fr } .sty-nav { flex-direction:row; overflow:auto; border-right:0; border-bottom:1px solid var(--line) }
+  .sty-ni { flex:none } .sty-ni span { display:none } .sty-ni b { font-size:15px } .sty-grid { grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)) } .sty-grid.sw { grid-template-columns:repeat(auto-fill, minmax(64px, 1fr)) }
+  .hbx-opt { font-size:13px } .sty-gh b, .sty-gv { font-size:12px } .sty-sh b { font-size:20px } .sty-sh span { font-size:12px } .sty-h b { font-size:24px } .sty-h span { font-size:12px } .sty-grid.any { grid-template-columns:repeat(12, minmax(0, 1fr)) }
+}
+@media (prefers-reduced-motion: reduce) { .sty-card, .sty-sec.show { animation:none } .hbx-pv * { animation:none !important } }
+
+/* Compact chips for schemes, presets and on/off settings: a short color strip with the name under it. */
+.sty-grid.cp { grid-template-columns:repeat(auto-fill, minmax(8.8vw, 1fr)); gap:1vh }
+.hbx-opt.cp { padding:.5vh; gap:.4vh; font-size:1.5vh } .hbx-opt.cp .hbx-pv { aspect-ratio:3.4; border-radius:.8vh } .hbx-opt.cp .hbx-pvw { border-radius:.8vh }
+.hbx-opt.cp .hbx-ck { top:.6vh; right:.6vh; width:2vh; height:2vh; font-size:1.2vh }
+.hbx-opt.cp .pv-fx { font-size:1.4vh } .hbx-opt.cp .pv-fx.sm { font-size:1.2vh } .hbx-opt.cp .pv-glow { font-size:2vh } .hbx-opt.cp .pv-cyc { width:18% }
+.hbx-opt.cp.on { scale:1.08 }
+.sty-ni span { font-size:1.35vh } .sty-ni b { font-size:2.2vh } .sty-body { grid-template-columns:20vw minmax(0, 1fr) }
+/* Lighter while Style is open: only the focused tile's preview moves (the screen behind keeps moving, to show the change). */
+#sty .hbx-opt:not(.on) .hbx-pv * { animation-play-state:paused !important }
+#sty .hbx-opt.on .hbx-pvw { box-shadow:0 0 0 .35vh var(--hbx-glow) !important; animation:none !important; background-image:none !important }
+.sty-card { box-shadow:0 2vh 6vh rgba(0,0,0,.5) }

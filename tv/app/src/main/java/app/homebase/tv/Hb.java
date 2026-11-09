@@ -65,12 +65,23 @@ final class Hb {
     private static synchronized String page(Context c) {
         if (page != null) return page;
         java.io.File f = new java.io.File(c.getFilesDir(), "tv.html");
+        String bundled;
+        try (InputStream in = c.getAssets().open("tv.html")) { bundled = readAll(in); }
+        catch (Exception e) { bundled = "<body style='background:#0D1412'></body>"; }
+        bundledVer = pageVer(bundled);
         if (f.isFile() && f.length() > 50000) {
-            try (InputStream in = new java.io.FileInputStream(f)) { page = readAll(in); return page; } catch (Exception e) { /* use the bundled copy */ }
+            // A saved copy from the bridge is used unless it's older than the one that came with this app.
+            try (InputStream in = new java.io.FileInputStream(f)) { String saved = readAll(in); if (pageVer(saved) >= bundledVer) { page = saved; return page; } } catch (Exception e) { /* use the bundled copy */ }
         }
-        try (InputStream in = c.getAssets().open("tv.html")) { page = readAll(in); }
-        catch (Exception e) { page = "<body style='background:#0D1412'></body>"; }
+        page = bundled;
         return page;
+    }
+    private static long bundledVer;
+    /** The page's version from its Style panel ("Page 12.0", "Page 11.9-D") as one comparable number. */
+    static long pageVer(String html) {
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("sty-ver\">Page (\\d+)\\.(\\d+)(?:-([A-Z]))?").matcher(html == null ? "" : html);
+        if (!m.find()) return 0;
+        return Long.parseLong(m.group(1)) * 10000 + Long.parseLong(m.group(2)) * 100 + (m.group(3) == null ? 0 : m.group(3).charAt(0) - 'A' + 1);
     }
     private static String readAll(InputStream in) throws java.io.IOException {
         java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
@@ -96,7 +107,7 @@ final class Hb {
                 if (h.getResponseCode() != 200) return;
                 String got;
                 try (InputStream in = h.getInputStream()) { got = readAll(in); }
-                if (got.length() < 50000 || !got.contains("id=\"wrap\"") || got.equals(page)) return;
+                if (got.length() < 50000 || !got.contains("id=\"wrap\"") || got.equals(page) || pageVer(got) < bundledVer) return;
                 java.io.File tmp = new java.io.File(c.getFilesDir(), "tv.html.part");
                 try (java.io.FileOutputStream out = new java.io.FileOutputStream(tmp)) { out.write(got.getBytes("UTF-8")); }
                 if (tmp.renameTo(new java.io.File(c.getFilesDir(), "tv.html"))) { synchronized (Hb.class) { page = got; } newPage = true; }

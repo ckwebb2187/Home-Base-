@@ -88,6 +88,12 @@ public class HomeActivity extends Activity {
     private static final class TileRef { final Tile t; final ImageView img, sticker; TileRef(Tile t, ImageView img, ImageView sticker) { this.t = t; this.img = img; this.sticker = sticker; } }
     private final List<TileRef> refs = new ArrayList<>();
     private int themeGen;
+    /** The look's button settings, sent by the page (HBLook.fx): glow style, which tiles glow, strength, press effect. */
+    private String fxBtn = "soft", fxWhich = "sel", fxStr = "normal", fxPress = "push", fxJson = "";
+    private int fxGlow = 0;
+    private float fxK() { return "subtle".equals(fxStr) ? 0.6f : "strong".equals(fxStr) ? 1.6f : 1f; }
+    private float focusScale() { return "subtle".equals(fxStr) ? 1.08f : "strong".equals(fxStr) ? 1.16f : 1.12f; }
+    private int glowC() { return fxGlow != 0 ? fxGlow : glow; }
 
     /** One tile: an app, the Home Base wall, or Settings. */
     private static final class Tile {
@@ -169,6 +175,7 @@ public class HomeActivity extends Activity {
             @JavascriptInterface public void place(final String where) { jsPlace(where); }
             @JavascriptInterface public void update() { jsUpdate(); }
             @JavascriptInterface public String version() { return Upd.versionName(HomeActivity.this); }
+            @JavascriptInterface public void fx(final String json) { ui.post(() -> setFx(json)); }
             @JavascriptInterface public void ready() { ui.post(() -> fallback.animate().alpha(0f).setDuration(400).withEndAction(() -> fallback.setVisibility(View.GONE)).start()); }
         }, "HomeBaseTVApp");
         root.addView(web, new FrameLayout.LayoutParams(-1, -1));
@@ -202,12 +209,13 @@ public class HomeActivity extends Activity {
 
         // The small Style and Settings buttons, bottom right (or in the app row; Style → Settings button).
         gearPlace = Hb.prefs(this).getString("gear", "corner");
+        parseFx(Hb.prefs(this).getString("tileFx", ""));
         corner = new LinearLayout(this);
         corner.setOrientation(LinearLayout.HORIZONTAL);
         corner.setClipChildren(false);
         corner.setClipToPadding(false);
-        corner.addView(pill("Style", () -> openStyle()), pillParams());
-        corner.addView(pill("Settings", () -> openSettings()), pillParams());
+        corner.addView(pill("\uD83C\uDFA8", () -> openStyle()), pillParams());   // 🎨 Style
+        corner.addView(pill("\u2699", () -> openSettings()), pillParams());   // ⚙ Settings
         FrameLayout.LayoutParams kp = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.END);
         kp.rightMargin = pad; kp.bottomMargin = Math.round(H * 0.022f);
         corner.setVisibility("corner".equals(gearPlace) ? View.VISIBLE : View.GONE);
@@ -318,9 +326,16 @@ public class HomeActivity extends Activity {
     private View pill(String text, final Runnable open) {
         final TextView t = new TextView(this);
         t.setText(text);
+        final boolean icon = text.codePointCount(0, text.length()) == 1;
+        final boolean gear = "\u2699".equals(text);
+        t.setContentDescription(gear ? "Settings" : icon ? "Style" : text);
+        final PaletteIcon pal = icon && !gear ? new PaletteIcon() : null;
+        final GearIcon gi = gear ? new GearIcon() : null;
+        final android.graphics.drawable.Drawable ic = pal != null ? pal : gi;
+        if (ic != null) { t.setText(""); int is = Math.round(tileH * 0.26f); ic.setBounds(0, 0, is, is); t.setCompoundDrawables(ic, null, null, null); }
         t.setTextColor(Color.argb(235, 238, 242, 239));
         t.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        t.setTextSize(TypedValue.COMPLEX_UNIT_PX, tileH * 0.17f);
+        t.setTextSize(TypedValue.COMPLEX_UNIT_PX, tileH * (icon ? 0.24f : 0.17f));
         int ph = Math.round(tileH * 0.16f), pv = Math.round(tileH * 0.07f);
         t.setPadding(ph, pv, ph, pv);
         final GradientDrawable bg = new GradientDrawable();
@@ -331,18 +346,26 @@ public class HomeActivity extends Activity {
         final int stroke = Math.max(2, Math.round(tileH * 0.025f));
         final Runnable style = () -> {
             boolean f = t.hasFocus();
-            bg.setColor(f ? Color.argb(90, Color.red(glow), Color.green(glow), Color.blue(glow)) : Color.argb(110, 0, 0, 0));
-            bg.setStroke(stroke, f ? mix(glow, Color.WHITE, 0.45f) : Color.argb(60, 255, 255, 255));
+            int gc = glowC();
+            boolean rest = !f && "all".equals(fxWhich);
+            if (pal != null) {
+                pal.body = mix(theme.main, gc, 0.35f); pal.edge = mix(gc, Color.WHITE, f ? 0.6f : 0.3f);
+                pal.dots = new int[]{ theme.gold, Color.WHITE, mix(gc, Color.WHITE, 0.35f), mix(theme.accent, theme.gold, 0.5f) };
+                pal.invalidateSelf();
+            }
+            if (gi != null) { gi.body = mix(theme.main, gc, 0.35f); gi.edge = mix(gc, Color.WHITE, f ? 0.6f : 0.3f); gi.hub = theme.gold; gi.invalidateSelf(); }
+            bg.setColor(f ? Color.argb(Math.min(255, Math.round(90 * fxK())), Color.red(gc), Color.green(gc), Color.blue(gc)) : Color.argb(110, 0, 0, 0));
+            bg.setStroke(stroke, f ? ("neon".equals(fxBtn) ? gc : mix(gc, Color.WHITE, 0.45f)) : rest ? Color.argb(150, Color.red(gc), Color.green(gc), Color.blue(gc)) : Color.argb(60, 255, 255, 255));
         };
         style.run();
         restyle.add(style);
         t.setOnFocusChangeListener((v, has) -> {
             style.run();
-            v.animate().scaleX(has ? 1.12f : 1f).scaleY(has ? 1.12f : 1f).setDuration(150).start();
-            if (has) label.setText("Settings".equals(text) ? "Settings  ·  hold OK to change the Home Base code" : "Style  ·  colors, glows and effects");
+            v.animate().scaleX(has ? focusScale() : 1f).scaleY(has ? focusScale() : 1f).setDuration(150).start();
+            if (has) label.setText(gear ? "Settings  ·  hold OK to change the Home Base code" : "Style  ·  colors, glows and effects");
         });
-        t.setOnClickListener(v -> open.run());
-        t.setOnLongClickListener(v -> { if ("Settings".equals(text)) { startActivity(new Intent(this, PairActivity.class)); return true; } return false; });
+        t.setOnClickListener(v -> pressThen(v, null, open));
+        t.setOnLongClickListener(v -> { if (gear) { startActivity(new Intent(this, PairActivity.class)); return true; } return false; });
         return t;
     }
     private LinearLayout.LayoutParams pillParams() { LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-2, -2); p.leftMargin = Math.round(tileH * 0.12f); return p; }
@@ -369,6 +392,37 @@ public class HomeActivity extends Activity {
                 }
             });
         }, "hb-tiles").start();
+    }
+
+    /** The page's look settings for the app's own buttons (glow style, which glow, strength, press effect, glow color). */
+    private void setFx(String json) {
+        if (json == null || json.length() > 4000 || json.equals(fxJson)) return;
+        parseFx(json);
+        Hb.prefs(this).edit().putString("tileFx", json).apply();
+        for (Runnable r : restyle) r.run();
+    }
+    private void parseFx(String json) {
+        if (json == null || json.isEmpty()) return;
+        try {
+            org.json.JSONObject o = new org.json.JSONObject(json);
+            fxBtn = o.optString("btn", fxBtn); fxWhich = o.optString("which", fxWhich); fxStr = o.optString("str", fxStr); fxPress = o.optString("press", fxPress);
+            String g = o.optString("glow", "");
+            fxGlow = g.matches("#[0-9a-fA-F]{6}") ? Color.parseColor(g) : 0;
+            fxJson = json;
+        } catch (Exception e) { /* keep the last settings */ }
+    }
+    /** The chosen press effect (push in, pop out, squish or flash), then the tile opens. */
+    private void pressThen(final View view, final View flash, final Runnable open) {
+        final float f = view.hasFocus() ? focusScale() : 1f;
+        view.animate().cancel();
+        Runnable back = () -> view.animate().scaleX(f).scaleY(f).setDuration(150).start();
+        switch (fxPress) {
+            case "pop": view.animate().scaleX(f * 1.08f).scaleY(f * 1.08f).setDuration(120).withEndAction(back).start(); break;
+            case "squish": view.animate().scaleX(f * 1.09f).scaleY(f * 0.9f).setDuration(120).withEndAction(back).start(); break;
+            case "flash": if (flash != null) { flash.setAlpha(0.55f); flash.animate().alpha(0f).setDuration(250).start(); } else { view.setAlpha(0.55f); view.animate().alpha(1f).setDuration(250).start(); } break;
+            default: view.animate().scaleX(f * 0.93f).scaleY(f * 0.93f).setDuration(120).withEndAction(back).start();
+        }
+        ui.postDelayed(open, 170);
     }
 
     private void resetIdle() { ui.removeCallbacks(idle); ui.postDelayed(idle, IDLE_MS); }
@@ -506,25 +560,61 @@ public class HomeActivity extends Activity {
         haloStyle.run();
         restyle.add(style);
         restyle.add(haloStyle);
-        final ObjectAnimator breathe = ObjectAnimator.ofFloat(ring, "alpha", 1f, 0.55f);
-        breathe.setDuration(1400);
-        breathe.setRepeatCount(ValueAnimator.INFINITE);
-        breathe.setRepeatMode(ValueAnimator.REVERSE);
-        final ObjectAnimator haloBreathe = ObjectAnimator.ofFloat(halo, "alpha", 1f, 0.6f);
-        haloBreathe.setDuration(1400);
-        haloBreathe.setRepeatCount(ValueAnimator.INFINITE);
-        haloBreathe.setRepeatMode(ValueAnimator.REVERSE);
+        // A soft light band that slides across the tile (Light sweep, Hologram), and a white wash for the Flash press.
+        final View sweep = new View(this);
+        sweep.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, new int[]{ Color.TRANSPARENT, Color.argb(95, 255, 255, 255), Color.TRANSPARENT }));
+        sweep.setAlpha(0f);
+        v.addView(sweep, new FrameLayout.LayoutParams(Math.round(tileW * 0.45f), -1));
+        final View flash = new View(this);
+        flash.setBackgroundColor(Color.WHITE);
+        flash.setAlpha(0f);
+        v.addView(flash, new FrameLayout.LayoutParams(-1, -1));
+        final boolean isMain = t.key.equals("homebase");
+        final List<android.animation.Animator> running = new ArrayList<>();
+        final String[] lastKey = { "" };
+        // The selected tile's look, in the glow style chosen in Style → Buttons & glows (the same names as on the page).
+        // A new color (theme cycling) only recolors it; a new style or a focus change restarts its animation.
+        final Runnable look = () -> {
+            boolean has = v.hasFocus();
+            float k = fxK();
+            int gc = glowC();
+            boolean rest = !has && ("all".equals(fxWhich) || ("main".equals(fxWhich) && isMain));
+            int st = Math.round(stroke * (has ? ("neon".equals(fxBtn) ? 1.6f : 1f) : 0.7f) * Math.max(0.8f, k));
+            int edge = "holo".equals(fxBtn) ? Color.rgb(120, 245, 255) : "neon".equals(fxBtn) ? gc : mix(gc, Color.WHITE, 0.45f);
+            if (!"rainbow".equals(fxBtn) || !has) rd.setStroke(st, edge);
+            rd.setColor(has ? Color.argb(Math.min(255, Math.round(38 * k)), Color.red(gc), Color.green(gc), Color.blue(gc)) : Color.TRANSPARENT);
+            if (Build.VERSION.SDK_INT >= 28) { v.setOutlineSpotShadowColor(gc); v.setOutlineAmbientShadowColor(glow2); }
+            String key = fxBtn + has + fxStr + fxWhich;
+            if (key.equals(lastKey[0])) return;
+            lastKey[0] = key;
+            for (android.animation.Animator a : running) a.cancel();
+            running.clear();
+            ring.setAlpha(has ? 1f : 0.5f); halo.setScaleX(1f); halo.setScaleY(0.62f); sweep.setAlpha(0f); sweep.setTranslationX(0f);
+            ring.setVisibility(has || rest ? View.VISIBLE : View.INVISIBLE);
+            halo.animate().cancel();
+            if (!has) { halo.animate().alpha(0f).setDuration(150).start(); return; }
+            halo.animate().alpha(Math.min(1f, 0.85f * k)).setDuration(250).start();
+            switch (fxBtn) {
+                case "pulse": { ObjectAnimator a = ObjectAnimator.ofPropertyValuesHolder(halo, android.animation.PropertyValuesHolder.ofFloat("scaleX", 0.9f, 1.18f), android.animation.PropertyValuesHolder.ofFloat("scaleY", 0.56f, 0.74f));
+                    a.setDuration(1000); a.setRepeatCount(ValueAnimator.INFINITE); a.setRepeatMode(ValueAnimator.REVERSE); a.start(); running.add(a); break; }
+                case "breathe": { ObjectAnimator a = ObjectAnimator.ofFloat(ring, "alpha", 1f, 0.45f); a.setDuration(2000); a.setRepeatCount(ValueAnimator.INFINITE); a.setRepeatMode(ValueAnimator.REVERSE); a.start(); running.add(a);
+                    ObjectAnimator b = ObjectAnimator.ofFloat(halo, "alpha", Math.min(1f, 0.85f * k), 0.35f); b.setStartDelay(250); b.setDuration(2000); b.setRepeatCount(ValueAnimator.INFINITE); b.setRepeatMode(ValueAnimator.REVERSE); b.start(); running.add(b); break; }
+                case "sweep": case "holo": { sweep.setAlpha(1f); ObjectAnimator a = ObjectAnimator.ofFloat(sweep, "translationX", -tileW * 0.5f, tileW * 1.05f);
+                    a.setDuration("holo".equals(fxBtn) ? 3200 : 2400); a.setRepeatCount(ValueAnimator.INFINITE); a.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator()); a.start(); running.add(a); break; }
+                case "rainbow": { ValueAnimator a = ValueAnimator.ofFloat(0f, 360f); a.setDuration(6000); a.setRepeatCount(ValueAnimator.INFINITE); a.setInterpolator(new android.view.animation.LinearInterpolator());
+                    final int stw = st; a.addUpdateListener(an -> rd.setStroke(stw, Color.HSVToColor(new float[]{ (float) an.getAnimatedValue(), 0.7f, 1f }))); a.start(); running.add(a); break; }
+                default: break;   // soft and neon stay still
+            }
+        };
+        look.run();
+        restyle.add(look);
 
         v.setOnFocusChangeListener((view, has) -> {
-            ring.setVisibility(has ? View.VISIBLE : View.INVISIBLE);
-            if (has) breathe.start(); else { breathe.cancel(); ring.setAlpha(1f); }
-            haloBreathe.cancel();
-            if (has) halo.animate().alpha(1f).setDuration(220).withEndAction(haloBreathe::start).start();
-            else halo.animate().alpha(0f).setDuration(160).start();
-            view.animate().scaleX(has ? 1.12f : 1f).scaleY(has ? 1.12f : 1f).translationZ(has ? 36f : 0f).setDuration(160).start();
+            look.run();
+            view.animate().scaleX(has ? focusScale() : 1f).scaleY(has ? focusScale() : 1f).translationZ(has ? 36f : 0f).setDuration(150).start();
             if (has) label.setText(t.name);
         });
-        v.setOnClickListener(view -> t.open.run());
+        v.setOnClickListener(view -> pressThen(view, flash, t.open));
         v.setOnLongClickListener(view -> {
             if (t.key.equals("settings")) { startActivity(new Intent(this, PairActivity.class)); return true; }
             if (t.key.equals("homebase")) return false;
