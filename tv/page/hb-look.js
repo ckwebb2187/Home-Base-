@@ -16,7 +16,7 @@
    ========================================================================================================== */
 window.HBLook = window.HBLook || (() => {
   'use strict';
-  const VER = '1.0';
+  const VER = '1.1';
   const E = 'cubic-bezier(.2,.8,.2,1)';   /* the one easing; durations are 150, 250 and 400 ms */
 
   /* ---------- small helpers ---------- */
@@ -71,6 +71,15 @@ window.HBLook = window.HBLook || (() => {
   const OFTEN = [['rare', 'Now and then'], ['some', 'Sometimes'], ['often', 'Often']];
   const OFTEN_MS = { rare: 12 * 60e3, some: 5 * 60e3, often: 100e3 };
   const STR_K = { subtle: 0.6, normal: 1, strong: 1.6 };
+  /* The feel settings: each effect has its own switch (they don't change the quick look). Calm by default. */
+  const ON = [['on', 'On'], ['off', 'Off']];
+  const HOLI = [['subtle', 'Subtle'], ['full', 'Full'], ['off', 'Off']];
+  const VOL = [['low', 'Quiet'], ['mid', 'Medium'], ['high', 'Loud']];
+  const SPEED = [['slow', 'Slow'], ['normal', 'Normal'], ['fast', 'Fast']];
+  const FUN = [['calm', 'Calm'], ['playful', 'Playful'], ['party', 'Party']];
+  const ART = [['theme', 'In my colors'], ['real', 'Original app art']];
+  const FEEL = { tilt: ON, sheen: ON, glass: ON, drift: ON, tod: ON, wx: ON, holi: HOLI, snd: ON, vol: VOL, strip: ON, boot: ON, kb: ON, kbSpeed: SPEED, fun: FUN, art: ART };
+  const FEEL_DEF = { tilt: 'on', sheen: 'on', glass: 'on', drift: 'on', tod: 'off', wx: 'off', holi: 'subtle', snd: 'off', vol: 'low', strip: 'on', boot: 'on', kb: 'on', kbSpeed: 'normal', fun: 'calm', art: 'theme' };
 
   /* Quick looks: one press sets everything (colors included). Classic clears the part colors. */
   const QUICK = [
@@ -88,12 +97,16 @@ window.HBLook = window.HBLook || (() => {
       colors: { bg: '#03040C', card: '#0B0E22', head: '#9DB4FF', hi: '#C9A7FF', glow: '#7A8CFF', clock: '#E6E9FF', btn: '#1B2160' } }]
   ];
   const DEF = { quick: 'classic', colors: {}, clock: 'soft', clockAnim: 'slide', date: 'plain', dateAnim: 'fade', btn: 'soft', which: 'sel', str: 'normal',
-    press: 'push', card: 'soft', motion: '', mset: 'match', pals: 'on', palsOften: 'some', ts: 0 };
-  const LISTS = { clock: TEXT_FX, date: TEXT_FX, clockAnim: TICKS, dateAnim: TICKS, btn: BTNS, which: WHICH, str: STRENGTH, press: PRESS, card: CARDS, motion: MOTIONS, mset: MSETS, pals: PALS_ON, palsOften: OFTEN };
+    press: 'push', card: 'soft', motion: '', mset: 'match', pals: 'on', palsOften: 'some', ...FEEL_DEF, ts: 0 };
+  const LISTS = { clock: TEXT_FX, date: TEXT_FX, clockAnim: TICKS, dateAnim: TICKS, btn: BTNS, which: WHICH, str: STRENGTH, press: PRESS, card: CARDS, motion: MOTIONS, mset: MSETS, pals: PALS_ON, palsOften: OFTEN, ...FEEL };
+  const NOT_LOOK = new Set(['pals', 'palsOften', ...Object.keys(FEEL)]);
   function norm(o) {
     o = o && typeof o === 'object' ? o : {};
     const L = { ...DEF };
     Object.keys(LISTS).forEach(k => { if (LISTS[k].some(x => x[0] === o[k])) L[k] = o[k]; });
+    /* Settings saved before the Fun level existed keep their characters (on = Playful). */
+    if (!FUN.some(x => x[0] === o.fun) && o.pals) L.fun = o.pals === 'off' ? 'calm' : o.palsOften === 'often' ? 'party' : 'playful';
+    L.pals = L.fun === 'calm' ? 'off' : 'on';
     L.quick = QUICK.some(q => q[0] === o.quick) ? o.quick : (o.quick === '' ? '' : DEF.quick);
     L.colors = {}; PARTS.forEach(([k]) => { if (o.colors && isHex(o.colors[k])) L.colors[k] = o.colors[k].toUpperCase(); });
     L.ts = +o.ts || 0;
@@ -105,7 +118,8 @@ window.HBLook = window.HBLook || (() => {
     if (key === 'quick') { const q = QUICK.find(x => x[0] === val); if (q) Object.assign(n, JSON.parse(JSON.stringify(q[2])), { quick: val }); }
     else if (key === 'color') { const [part, c] = val; if (isHex(c)) n.colors[part] = c.toUpperCase(); else delete n.colors[part]; n.quick = ''; }
     else if (key === 'colorsReset') { n.colors = {}; n.quick = ''; }
-    else if (LISTS[key]) { n[key] = val; if (!['pals', 'palsOften'].includes(key)) n.quick = ''; }
+    else if (key === 'recommended') { const keep = n.ts; Object.assign(n, JSON.parse(JSON.stringify(DEF)), JSON.parse(JSON.stringify(QUICK[0][2])), { quick: 'classic', colors: {}, ts: keep }); }
+    else if (LISTS[key]) { n[key] = val; if (!NOT_LOOK.has(key)) n.quick = ''; }
     n.ts = Date.now();
     return norm(n);
   }
@@ -224,6 +238,13 @@ ${Object.keys(PRESS_KF).map(k => `html[data-hbx-press="${k}"] .hbx-press{${PRESS
     if (s.press) c += `${pre(R, s.press.split(',').map(x => x.trim() + ':active').join(','))}{${PRESS_KF[L.press]};transition:scale 150ms ${E},filter 150ms ${E}}\n`;
     if (s.btnFill && L.colors.btn) c += `${pre(R, s.btnFill)}{background-color:var(--hbx-btn)!important;color:var(--hbx-btnink)!important;border-color:var(--hbx-btn)!important}\n`;
     if (s.card && CARD_CSS[L.card]) c += sub(CARD_CSS[L.card], pre(R, s.card)) + '\n';
+    const gl = [s.card, s.glass].filter(Boolean).join(',');
+    if (gl) {
+      c += `${pre(R, gl)}{border-top-color:rgba(255,255,255,.16)!important}\n`;
+      if (L.glass === 'on') c += `${pre(R + ':not(.hbx-perf)', gl)}{background-color:color-mix(in srgb,var(--hbx-cardc) 58%,transparent)!important;-webkit-backdrop-filter:blur(24px) saturate(1.35);backdrop-filter:blur(24px) saturate(1.35)}\n`
+        + `${pre(R + '.hbx-perf', gl)}{background-color:color-mix(in srgb,var(--hbx-cardc) 86%,transparent)!important}\n`;
+      else c += `${pre(R, gl)}{background-color:color-mix(in srgb,var(--hbx-cardc) 97%,#000)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}\n`;
+    }
     if (s.headText && L.colors.head) c += `${pre(R, s.headText)}{color:var(--hbx-headc)!important}\n`;
     if (s.hiText && L.colors.hi) c += `${pre(R, s.hiText)}{color:var(--hbx-hi)!important}\n`;
     return c;
@@ -486,13 +507,16 @@ html.hbx-perf .mo-neongrid .ng-haze,html.hbx-perf .mo-neongrid .ng-sun{filter:no
 .hbx-pal.hop{left:0;bottom:var(--hbx-safe,0px);animation:pl-zip 9s linear forwards}
 .hbx-pal.hop > svg{animation:pl-hop .75s ease-in-out infinite;transform-origin:50% 100%}
 @keyframes pl-hop{0%,100%{translate:0 0;scale:1.06 .94}45%{translate:0 -32%;scale:.96 1.05}}
+.hbx-confetti{position:fixed;inset:0;z-index:31;pointer-events:none;overflow:hidden}
+.hbx-confetti i{position:absolute;top:-4vh;width:1vh;height:1.6vh;border-radius:2px;opacity:.9;animation:hbx-fall linear both}
+@keyframes hbx-fall{to{transform:translate3d(4vw,112vh,0) rotate(540deg);opacity:.7}}
 .hbx-pal .pl-trail{position:absolute;right:90%;top:40%;width:60%;height:14%;border-radius:9px;background:linear-gradient(90deg,transparent,var(--hbx-hi));opacity:.6}
 `;
   let palN = 0;
   function palVisit(force) {
-    if (!force && (L.pals !== 'on' || document.hidden || still() || H.busy())) return;
+    if (!force && (L.fun === 'calm' || document.hidden || still() || H.busy())) return;
     if (document.querySelector('.hbx-pal')) return;
-    const n = PAL_NAMES[palN % PAL_NAMES.length], mode = ['peek', 'zip', 'hop'][palN % 3]; palN++;
+    const n = PAL_NAMES[palN % PAL_NAMES.length], mode = typeof force === 'string' ? force : ['peek', 'zip', 'hop'][palN % 3]; palN++;
     const el = document.createElement('div'); el.className = 'hbx-pal ' + mode;
     el.style.setProperty('--hbx-safe', H.safeBottom || '0px');
     el.innerHTML = (mode === 'zip' ? '<i class="pl-trail"></i>' : '') + palSvg(n);
@@ -501,9 +525,30 @@ html.hbx-perf .mo-neongrid .ng-haze,html.hbx-perf .mo-neongrid .ng-sun{filter:no
   }
   function palSchedule() {
     clearTimeout(palT);
-    if (L.pals !== 'on') { document.querySelectorAll('.hbx-pal').forEach(x => x.remove()); return; }
-    const ms = OFTEN_MS[L.palsOften] || OFTEN_MS.some;
+    if (L.fun === 'calm') { document.querySelectorAll('.hbx-pal').forEach(x => x.remove()); return; }
+    greet();
+    const ms = L.fun === 'party' ? Math.min(OFTEN_MS[L.palsOften] || OFTEN_MS.some, OFTEN_MS.often) : OFTEN_MS[L.palsOften] || OFTEN_MS.some;
     palT = setTimeout(() => { palVisit(); palSchedule(); }, ms * (0.75 + Math.random() * 0.5));
+  }
+
+  /* A character peeks up and waves the first time the screen is seen each day (after 5 am). */
+  function greet() {
+    if (L.fun === 'calm' || document.hidden || still() || H.busy() || new Date().getHours() < 5) return;
+    const day = new Date().toDateString(); let last = '';
+    try { last = localStorage.getItem('hbx.greet') || ''; } catch (e) {}
+    if (last === day) return;
+    try { localStorage.setItem('hbx.greet', day); } catch (e) {}
+    setTimeout(() => palVisit('peek'), 2500);
+  }
+  /* Chores all done: a character hops across (Party adds a burst of confetti). */
+  function cheer() {
+    if (L.fun === 'calm' || document.hidden || still()) return;
+    palVisit('hop');
+    if (L.fun !== 'party' || H.perf()) return;
+    const box = document.createElement('div'); box.className = 'hbx-confetti'; box.setAttribute('aria-hidden', 'true');
+    const cols = [PAINTED ? PAINTED.glow : '#6DC2A4', PAINTED ? PAINTED.hi : '#F0B43C', '#FF8FB1', '#ffffff'], r = rng(Date.now());
+    let h = ''; for (let i = 0; i < 36; i++) h += `<i style="left:${f1(r() * 100)}vw;background:${cols[i % 4]};animation-delay:${f1(r() * 0.6)}s;animation-duration:${f1(2.4 + r() * 1.4)}s;rotate:${Math.round(r() * 360)}deg"></i>`;
+    box.innerHTML = h; document.body.appendChild(box); setTimeout(() => box.remove(), 4500);
   }
 
   /* ---------- keeping repeating animations in step with the clock ----------
@@ -531,6 +576,8 @@ html.hbx-perf .mo-neongrid .ng-haze,html.hbx-perf .mo-neongrid .ng-sun{filter:no
     R.classList.add('hbx-on');
     R.classList.toggle('hbx-perf', !!H.perf());
     R.dataset.hbxPress = L.press;
+    ['tilt', 'sheen', 'glass', 'drift', 'tod', 'wx', 'strip', 'boot', 'kb'].forEach(k => R.classList.toggle('hbx-' + k, L[k] === 'on'));
+    R.dataset.hbxHoli = L.holi; R.dataset.hbxFun = L.fun;
     if (rootEl) { const css = rootCss(); if (rootEl.textContent !== css) rootEl.textContent = css; }
     paint();
     mountMotion();
@@ -542,7 +589,7 @@ html.hbx-perf .mo-neongrid .ng-haze,html.hbx-perf .mo-neongrid .ng-sun{filter:no
   /* What the TV app needs for its own tiles: glow style, which tiles, strength, press effect and the colors. */
   function fxForApp() {
     const c = PAINTED || {};
-    return { btn: L.btn, which: L.which, str: L.str, press: L.press, glow: L.colors.glow ? c.glow : '' };
+    return { btn: L.btn, which: L.which, str: L.str, press: L.press, glow: L.colors.glow ? c.glow : '', tilt: L.tilt, sheen: L.sheen, snd: L.snd, vol: L.vol, art: L.art };
   }
   /* A press on a remote: the pressed element does the chosen press effect. */
   function press(el) {
@@ -562,6 +609,33 @@ html.hbx-perf .mo-neongrid .ng-haze,html.hbx-perf .mo-neongrid .ng-sun{filter:no
 .hbx-pv .pv-scene{position:absolute;inset:0;display:grid;grid-template-columns:1.1fr 1fr;gap:6%;padding:9% 8%;box-sizing:border-box;align-items:center}
 .hbx-pv .pv-scene .hbx-tx{font-size:1.5em}.hbx-pv .pv-scene .hbx-cd{width:100%;height:78%}
 .hbx-pv .pv-pal{width:42%;aspect-ratio:1}
+.hbx-pv .pv-off{opacity:.6;font-weight:700}
+.hbx-pv .pv-snd{width:30%;aspect-ratio:1;color:var(--hbx-glow);position:relative}.hbx-pv .pv-snd svg{width:100%;height:100%}.hbx-pv .pv-snd.off{color:currentColor;opacity:.6}
+.hbx-pv .pv-snd.off::after{content:'';position:absolute;left:-6%;right:-6%;top:50%;height:2px;background:currentColor;rotate:-35deg}
+.hbx-pv .pv-big{font-size:2.2em;line-height:1}.hbx-pv .pv-dim{opacity:.55;font-size:1.6em}
+.hbx-pv.pv-persp{perspective:300px}
+.hbx-pv .pv-card{position:relative;z-index:1;width:56%;height:58%;border-radius:12%;background:var(--hbx-cardc,#1a2420);border:1px solid rgba(255,255,255,.14);border-top-color:rgba(255,255,255,.3);display:flex;flex-direction:column;justify-content:center;gap:14%;padding:0 12%;box-sizing:border-box;overflow:hidden;box-shadow:0 8px 18px rgba(0,0,0,.35)}
+.hbx-pv .pv-card i{display:block;height:10%;border-radius:9px;background:currentColor;opacity:.35}.hbx-pv .pv-card i:first-child{width:60%;opacity:.8;background:var(--hbx-glow)}
+.hbx-pv .pv-tilt{animation:pv-tilt 3.2s ${E} infinite;box-shadow:0 12px 24px var(--hbx-g2)}
+@keyframes pv-tilt{0%,100%{transform:rotateY(-12deg) rotateX(4deg) scale(1.04)}50%{transform:rotateY(12deg) rotateX(-4deg) scale(1.04)}}
+.hbx-pv .pv-sheen::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.4) 50%,transparent 70%);animation:pv-sheen 2.4s ${E} infinite}
+@keyframes pv-sheen{from{translate:-110% 0}60%,to{translate:110% 0}}
+.hbx-pv .pv-blobs{position:absolute;inset:-20%;background:radial-gradient(circle at 30% 40%,var(--hbx-glow) 0 14%,transparent 30%),radial-gradient(circle at 70% 60%,var(--hbx-hi) 0 12%,transparent 28%),radial-gradient(circle at 50% 20%,#FF8FB1 0 8%,transparent 22%)}
+.hbx-pv .pv-drift{animation:pv-drift 6s ease-in-out infinite alternate}
+@keyframes pv-drift{to{translate:8% -6%}}
+.hbx-pv .pv-glass{background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}.hbx-pv .pv-solid{background:var(--hbx-cardc,#1a2420)}
+.hbx-pv .pv-tod{position:absolute;inset:0;background:linear-gradient(90deg,#F6B26B,#7AB8E8 35%,#4B3A7A 70%,#0B0E1E)}
+.hbx-pv .pv-tag{position:relative;padding:.2em .7em;border-radius:9px;background:rgba(0,0,0,.45);color:#fff;font-weight:700}
+.hbx-pv .pv-rain{position:absolute;inset:-50% 0 0;background:repeating-linear-gradient(105deg,transparent 0 9px,rgba(200,225,255,.35) 9px 10px);animation:pv-rain 1s linear infinite}
+@keyframes pv-rain{to{translate:-8px 50%}}
+.hbx-pv .pv-bars{display:flex;align-items:flex-end;gap:10%;width:34%;height:56%}.hbx-pv .pv-bars i{flex:1;border-radius:3px;background:rgba(255,255,255,.2)}.hbx-pv .pv-bars i.on{background:var(--hbx-glow)}
+.hbx-pv .pv-strip{position:absolute;top:10%;right:6%;padding:.2em .6em;border-radius:99px;background:rgba(255,255,255,.12);font-size:.62em;font-weight:700;white-space:nowrap}
+.hbx-pv .pv-logo{font-size:2.6em;line-height:1;color:var(--hbx-neonc,#fff);text-shadow:0 0 .2em var(--hbx-glow),0 0 .5em var(--hbx-g1);animation:pv-boot 2.8s ${E} infinite}
+@keyframes pv-boot{0%{opacity:0;scale:.9}25%,75%{opacity:1;scale:1}100%{opacity:0;scale:1}}
+.hbx-pv .pv-photo{position:absolute;inset:0;background:radial-gradient(circle at 70% 30%,rgba(255,255,255,.55) 0 10%,transparent 11%),linear-gradient(135deg,#E8913A,#6B2E7A)}
+.hbx-pv .pv-kb{animation:pv-kb var(--kbd,5.5s) linear infinite alternate}
+@keyframes pv-kb{to{scale:1.18;translate:-5% 3%}}
+.hbx-pv .pv-conf{position:absolute;inset:0;background:radial-gradient(circle,#FF8FB1 0 2px,transparent 3px) 0 0/22px 22px,radial-gradient(circle,var(--hbx-hi) 0 2px,transparent 3px) 11px 11px/22px 22px;opacity:.7;animation:pv-rain 2s linear infinite}
 .hbx-pv .pv-pop{animation:pv-pop var(--pd,4s) ${E} infinite}
 @keyframes pv-pop{0%,100%{translate:0 70%;opacity:0}15%,60%{translate:0 0;opacity:1}75%{translate:0 70%;opacity:0}}
 .hbx-pv .pv-parts{position:absolute;inset:0;padding:8%;box-sizing:border-box;display:grid;grid-template-columns:1fr 1.1fr;gap:6%;align-items:center}
@@ -607,11 +681,36 @@ html.hbx-perf .hbx-opt:not(.on):not(:hover) .hbx-pv *{animation-play-state:pause
       case 'pals': h = id === 'on' ? `<div class="hbx-pv"><div class="pv-pal">${palSvg('momo')}</div></div>` : '<div class="hbx-pv"><span style="opacity:.6;font-weight:700">Off</span></div>'; break;
       case 'palsOften': h = `<div class="hbx-pv"><div class="pv-pal pv-pop" style="--pd:${id === 'rare' ? 6 : id === 'some' ? 3.6 : 2}s">${palSvg(id === 'rare' ? 'kiki' : id === 'some' ? 'bolt' : 'tofu')}</div></div>`; break;
       case 'part': h = partPreview(id); break;
+      case 'fun': h = id === 'calm' ? '<div class="hbx-pv"><span class="pv-off">Calm</span></div>' : `<div class="hbx-pv">${id === 'party' ? '<i class="pv-conf"></i>' : ''}<div class="pv-pal pv-pop" style="--pd:${id === 'party' ? 2 : 3.6}s">${palSvg(id === 'party' ? 'kiki' : 'momo')}</div></div>`; break;
+      default: if (FEEL[key]) { h = feelPreview(key, id); break; }
       case 'swatch': h = `<div class="hbx-pv"><i class="pv-sw" style="--sw:${id}"></i></div>`; break;
-      default: h = `<div class="hbx-pv"></div>`;
+        h = `<div class="hbx-pv"></div>`;
     }
     PV.set(k, h);
     return h;
+  }
+  /* The feel switches: a small picture of what each one does ("Off" shows it plain). */
+  const OFF = '<span class="pv-off">Off</span>';
+  function feelPreview(key, id) {
+    const on = id !== 'off', card = cls => `<div class="pv-card ${cls || ''}"><i></i><i></i></div>`;
+    switch (key) {
+      case 'tilt': return `<div class="hbx-pv pv-persp">${card(on ? 'pv-tilt' : '')}</div>`;
+      case 'sheen': return `<div class="hbx-pv">${card(on ? 'pv-sheen' : '')}</div>`;
+      case 'glass': return `<div class="hbx-pv"><div class="pv-blobs"></div>${card(on ? 'pv-glass' : 'pv-solid')}</div>`;
+      case 'drift': return `<div class="hbx-pv"><div class="pv-blobs${on ? ' pv-drift' : ''}"></div></div>`;
+      case 'tod': return on ? '<div class="hbx-pv"><div class="pv-tod"></div><span class="pv-tag">☀ → ☾</span></div>' : `<div class="hbx-pv">${OFF}</div>`;
+      case 'wx': return on ? '<div class="hbx-pv pv-rainbox"><i class="pv-rain"></i><span class="pv-big">🌧</span></div>' : `<div class="hbx-pv">${OFF}</div>`;
+      case 'holi': return id === 'off' ? `<div class="hbx-pv">${OFF}</div>` : `<div class="hbx-pv"><span class="pv-big${id === 'full' ? '' : ' pv-dim'}">${id === 'full' ? '🎃 🎄 🎉' : '🎃'}</span></div>`;
+      case 'snd': return `<div class="hbx-pv"><span class="pv-snd${on ? '' : ' off'}">${ICONS.sound}</span></div>`;
+      case 'vol': return `<div class="hbx-pv"><span class="pv-bars">${[1, 2, 3].map(n => `<i class="${n <= (id === 'low' ? 1 : id === 'mid' ? 2 : 3) ? 'on' : ''}" style="height:${n * 28}%"></i>`).join('')}</span></div>`;
+      case 'strip': return on ? '<div class="hbx-pv"><span class="pv-strip">☁ 54° · ▂▄▆ · 2 home</span></div>' : `<div class="hbx-pv">${OFF}</div>`;
+      case 'boot': return on ? '<div class="hbx-pv"><span class="pv-logo">⌂</span></div>' : `<div class="hbx-pv">${OFF}</div>`;
+      case 'kb': return `<div class="hbx-pv"><div class="pv-photo${on ? ' pv-kb' : ''}"></div></div>`;
+      case 'kbSpeed': return `<div class="hbx-pv"><div class="pv-photo pv-kb" style="--kbd:${id === 'slow' ? 9 : id === 'fast' ? 3 : 5.5}s"></div></div>`;
+      case 'art': return id === 'real' ? '<div class="hbx-pv"><div class="pv-stripes"><i style="background:#E50914"></i><i style="background:#1CE783"></i><i style="background:#FF0000"></i><i style="background:#00A8E1"></i></div></div>'
+        : '<div class="hbx-pv"><div class="pv-stripes"><i style="background:var(--hbx-glow)"></i><i style="background:color-mix(in srgb,var(--hbx-glow) 60%,#000)"></i><i style="background:var(--hbx-hi)"></i><i style="background:color-mix(in srgb,var(--hbx-glow) 40%,#fff)"></i></div></div>';
+    }
+    return '<div class="hbx-pv"></div>';
   }
   /* For a color part: a tiny screen with that part outlined. */
   function partPreview(part) {
@@ -624,25 +723,48 @@ html.hbx-perf .hbx-opt:not(.on):not(:hover) .hbx-pv *{animation-play-state:pause
   function forgetColorPreviews() { [...PV.keys()].forEach(k => { if (/^(part|motion|mset):/.test(k)) PV.delete(k); }); }
 
   /* ---------- the menu: groups and their options, shared by the wall's Settings and the TV's Style panel ---------- */
+  /* Section icons (simple line drawings in the text color). */
+  const ic = d => `<svg class="hbx-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const ICONS = {
+    quick: ic('<path d="M12 3l2.4 5.6L20 9.2l-4.3 3.9 1.2 5.9L12 16l-4.9 3 1.2-5.9L4 9.2l5.6-.6z"/>'),
+    colors: ic('<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.6-.8 1.6-1.6 0-1.2-1-1.4-1-2.4 0-.9.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>'),
+    clock: ic('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
+    buttons: ic('<rect x="3.5" y="7" width="17" height="10" rx="5"/><path d="M8 12h8"/>'),
+    cards: ic('<rect x="4" y="5" width="16" height="14" rx="3"/><path d="M4 9.5h16"/>'),
+    motion: ic('<path d="M3 15c3-6 6 2 9-4s6 2 9-2"/><path d="M3 20c3-4 6 1 9-2.5S18 19 21 16"/>'),
+    holidays: ic('<path d="M12 3l5 8h-3l4 6H6l4-6H7z"/><path d="M12 17v4"/>'),
+    fun: ic('<circle cx="12" cy="12" r="8.5"/><path d="M8.5 14.5c1.8 2 5.2 2 7 0"/><circle cx="9" cy="10" r=".9" fill="currentColor"/><circle cx="15" cy="10" r=".9" fill="currentColor"/>'),
+    screen: ic('<rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8.5 20h7M12 16.5V20"/>'),
+    sound: ic('<path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>')
+  };
+  /* ---------- the menu: groups and their options, shared by the wall's Settings (Look & feel) and the TV's Style panel ---------- */
   const SECTIONS = [
     { id: 'quick', name: 'Quick looks', hint: 'One press sets everything', groups: [{ key: 'quick', name: 'Quick looks', opts: QUICK.map(q => [q[0], q[1]]) }] },
     { id: 'colors', name: 'Colors', hint: 'Your own color for each part', groups: [{ key: 'part', name: 'Pick a part, then a color', opts: PARTS }] },
     { id: 'clock', name: 'Clock & date', hint: 'Styles and number animations', groups: [
       { key: 'clock', name: 'Clock style', opts: TEXT_FX }, { key: 'clockAnim', name: 'When the minute changes', opts: TICKS },
       { key: 'date', name: 'Date style', opts: TEXT_FX }, { key: 'dateAnim', name: 'When the date changes', opts: TICKS }] },
-    { id: 'buttons', name: 'Buttons & glows', hint: 'Glow, which buttons, strength, press', groups: [
+    { id: 'buttons', name: 'Buttons & glows', hint: 'Glow, tilt, sheen, press', groups: [
       { key: 'btn', name: 'Glow style', opts: BTNS }, { key: 'which', name: 'Which buttons glow', opts: WHICH },
-      { key: 'str', name: 'Strength', opts: STRENGTH }, { key: 'press', name: 'When pressed', opts: PRESS }] },
-    { id: 'cards', name: 'Cards & panels', hint: 'How the cards look', groups: [{ key: 'card', name: 'Card style', opts: CARDS }] },
-    { id: 'motion', name: 'Background motion', hint: 'Moving backgrounds and characters', groups: [
+      { key: 'str', name: 'Glow strength', opts: STRENGTH }, { key: 'tilt', name: 'Tilt toward you when highlighted', opts: ON },
+      { key: 'sheen', name: 'Light sheen when highlighted', opts: ON }, { key: 'press', name: 'When pressed', opts: PRESS }] },
+    { id: 'cards', name: 'Cards & panels', hint: 'Card style and frosted glass', groups: [{ key: 'card', name: 'Card style', opts: CARDS },
+      { key: 'glass', name: 'Frosted glass panels', opts: ON }] },
+    { id: 'motion', name: 'Background motion', hint: 'Moving backgrounds, light and weather', groups: [
       { key: 'motion', name: 'Futuristic motion', opts: MOTIONS }, { key: 'mset', name: 'Motion colors', opts: MSETS.map(m => [m[0], m[1]]) },
-      { key: 'pals', name: 'Fun characters', opts: PALS_ON }, { key: 'palsOften', name: 'How often they visit', opts: OFTEN }] },
-    { id: 'holidays', name: 'Holidays', hint: 'Holiday themes and their characters', groups: [] }
+      { key: 'drift', name: 'Slow background drift', opts: ON }, { key: 'tod', name: 'Time-of-day lighting', opts: ON },
+      { key: 'wx', name: 'Weather touches (rain, frost)', opts: ON }] },
+    { id: 'holidays', name: 'Holidays', hint: 'Holiday themes and their characters', groups: [{ key: 'holi', name: 'Holiday touches', opts: HOLI }] },
+    { id: 'fun', name: 'Fun', hint: 'Characters that visit now and then', groups: [{ key: 'fun', name: 'Fun level', opts: FUN }, { key: 'palsOften', name: 'How often they visit', opts: OFTEN }] }
   ];
+  /* Screen & sound settings (the TV adds these as their own section; the wall can show them under Screen & sound). */
+  const SCREEN = [{ key: 'snd', name: 'Navigation sounds', opts: ON }, { key: 'vol', name: 'Sound volume', opts: VOL },
+    { key: 'strip', name: 'Status strip (weather, Wi-Fi, who\'s home)', opts: ON }, { key: 'boot', name: 'Startup animation', opts: ON },
+    { key: 'kb', name: 'Screensaver photo zoom', opts: ON }, { key: 'kbSpeed', name: 'Screensaver speed', opts: SPEED }, { key: 'art', name: 'App tiles', opts: ART }];
   const cur = key => key === 'quick' ? L.quick : L[key];
 
   return {
     VER, init, apply, paint, lock, press, preview, forgetColorPreviews, set, norm, name, cur, get: () => L, painted: () => PAINTED,
-    SECTIONS, PARTS, SWATCHES, QUICK, LISTS, hsl, readable, contrast, mix, isHex, esc, palVisit, motionHtml
+    SECTIONS, SCREEN, ICONS, FEEL, PARTS, SWATCHES, QUICK, LISTS, hsl, readable, contrast, mix, isHex, esc, palVisit, greet, cheer, motionHtml
   };
 })();

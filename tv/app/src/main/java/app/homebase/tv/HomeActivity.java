@@ -90,6 +90,25 @@ public class HomeActivity extends Activity {
     private int themeGen;
     /** The look's button settings, sent by the page (HBLook.fx): glow style, which tiles glow, strength, press effect. */
     private String fxBtn = "soft", fxWhich = "sel", fxStr = "normal", fxPress = "push", fxJson = "";
+    /** The feel switches from Style: tilt toward you, light sheen, navigation sounds (and volume), tile art. */
+    private String fxTilt = "on", fxSheen = "on", fxSnd = "off", fxVol = "low", fxArt = "theme";
+    /** The one easing every animation uses (the page's cubic-bezier(.2,.8,.2,1)); 150 / 250 / 400 ms. */
+    private static final android.view.animation.Interpolator EASE = new android.view.animation.PathInterpolator(0.2f, 0.8f, 0.2f, 1f);
+    /** Which way the last arrow press went (-1 left, 1 right), so a newly focused tile tilts in from that side. */
+    private int navDir = 0;
+    private boolean keyNav;
+    private Snd snd;
+    /** The TV just woke: the page plays its startup animation the next time the home screen shows. */
+    private boolean bootPending;
+    private final android.content.BroadcastReceiver screenOn = new android.content.BroadcastReceiver() {
+        @Override public void onReceive(android.content.Context c, Intent i) { bootPending = true; if (hasWindowFocus()) playBoot(); }
+    };
+    private void playBoot() { bootPending = false; if (web != null) web.evaluateJavascript("window.hbBoot && hbBoot()", null); }
+    private void sound(String kind) {
+        if (!"on".equals(fxSnd)) return;
+        if (snd == null) snd = new Snd(this);
+        snd.play(kind, fxVol);
+    }
     private int fxGlow = 0;
     private float fxK() { return "subtle".equals(fxStr) ? 0.6f : "strong".equals(fxStr) ? 1.6f : 1f; }
     private float focusScale() { return "subtle".equals(fxStr) ? 1.08f : "strong".equals(fxStr) ? 1.16f : 1.12f; }
@@ -144,7 +163,7 @@ public class HomeActivity extends Activity {
         TextClock clock = new TextClock(this);
         clock.setFormat12Hour("h:mm");
         clock.setTextColor(Color.rgb(238, 242, 239));
-        clock.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
+        clock.setTypeface(Hb.display(this));
         clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, H * 0.16f);
         FrameLayout.LayoutParams cp = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.START);
         cp.leftMargin = Math.round(W * 0.055f); cp.topMargin = Math.round(H * 0.05f);
@@ -176,6 +195,8 @@ public class HomeActivity extends Activity {
             @JavascriptInterface public void update() { jsUpdate(); }
             @JavascriptInterface public String version() { return Upd.versionName(HomeActivity.this); }
             @JavascriptInterface public void fx(final String json) { ui.post(() -> setFx(json)); }
+            @JavascriptInterface public void snd(final String kind) { ui.post(() -> sound(kind)); }
+            @JavascriptInterface public String net() { return netState(); }
             @JavascriptInterface public void ready() { ui.post(() -> fallback.animate().alpha(0f).setDuration(400).withEndAction(() -> fallback.setVisibility(View.GONE)).start()); }
         }, "HomeBaseTVApp");
         root.addView(web, new FrameLayout.LayoutParams(-1, -1));
@@ -201,7 +222,8 @@ public class HomeActivity extends Activity {
         label = new TextView(this);
         label.setTextColor(Color.argb(230, 238, 242, 239));
         label.setTextSize(TypedValue.COMPLEX_UNIT_PX, H * 0.026f);
-        label.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        label.setTypeface(Hb.body(this, true));
+        label.setLetterSpacing(0.01f);
         label.setShadowLayer(8, 0, 2, Color.argb(160, 0, 0, 0));
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.START);
         lp.leftMargin = pad; lp.bottomMargin = Math.round(H * 0.03f);
@@ -226,6 +248,7 @@ public class HomeActivity extends Activity {
         pf.addAction(Intent.ACTION_PACKAGE_ADDED); pf.addAction(Intent.ACTION_PACKAGE_REMOVED); pf.addAction(Intent.ACTION_PACKAGE_CHANGED); pf.addAction(Intent.ACTION_PACKAGE_REPLACED);
         pf.addDataScheme("package");
         registerReceiver(appsChanged, pf);
+        registerReceiver(screenOn, new android.content.IntentFilter(Intent.ACTION_SCREEN_ON));
     }
 
     @Override protected void onResume() {
@@ -234,7 +257,7 @@ public class HomeActivity extends Activity {
         String want = Hb.pageUrl(this, "home");
         if (Hb.takeNewPage()) loadedFor = "";
         if (!want.equals(loadedFor)) { loadedFor = want; fallback.setVisibility(View.VISIBLE); fallback.setAlpha(1f); Hb.loadPage(this, web, "home"); }
-        else web.evaluateJavascript("window.hbRefresh && hbRefresh()", null);
+        else { web.evaluateJavascript("window.hbRefresh && hbRefresh()", null); if (bootPending) playBoot(); }
         toSaver = false;
         ui.removeCallbacks(zenSleep);
         if (zen == null) zen = new Zen(this);
@@ -273,6 +296,9 @@ public class HomeActivity extends Activity {
         // The ★ / menu buttons open Style.
         if (code == KeyEvent.KEYCODE_MENU || code == KeyEvent.KEYCODE_BOOKMARK || code == KeyEvent.KEYCODE_STAR) { if (down && e.getRepeatCount() == 0) openStyle(); return true; }
         if (code == KeyEvent.KEYCODE_BACK) return true;   // it's the home screen: nothing to go back to
+        if (down && (code == KeyEvent.KEYCODE_DPAD_LEFT || code == KeyEvent.KEYCODE_DPAD_RIGHT || code == KeyEvent.KEYCODE_DPAD_UP || code == KeyEvent.KEYCODE_DPAD_DOWN)) {
+            navDir = code == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : code == KeyEvent.KEYCODE_DPAD_RIGHT ? 1 : 0; keyNav = true;
+        }
         return super.dispatchKeyEvent(e);
     }
     private static String keyName(int code) {
@@ -301,7 +327,7 @@ public class HomeActivity extends Activity {
     }
     private void openStyle() { web.evaluateJavascript("window.hbStyle && hbStyle.open()", null); }
     private void openSettings() {
-        try { startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); } catch (Exception e) { Toast.makeText(this, "Settings wouldn't open.", Toast.LENGTH_SHORT).show(); }
+        try { startActivity(new Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); } catch (Exception e) { /* nothing on screen; the home screen stays */ }
     }
     private void say(String msg) {
         String js = "window.hbUpdate && hbUpdate(" + org.json.JSONObject.quote(msg) + ")";
@@ -334,7 +360,7 @@ public class HomeActivity extends Activity {
         final android.graphics.drawable.Drawable ic = pal != null ? pal : gi;
         if (ic != null) { t.setText(""); int is = Math.round(tileH * 0.26f); ic.setBounds(0, 0, is, is); t.setCompoundDrawables(ic, null, null, null); }
         t.setTextColor(Color.argb(235, 238, 242, 239));
-        t.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        t.setTypeface(Hb.body(this, true));
         t.setTextSize(TypedValue.COMPLEX_UNIT_PX, tileH * (icon ? 0.24f : 0.17f));
         int ph = Math.round(tileH * 0.16f), pv = Math.round(tileH * 0.07f);
         t.setPadding(ph, pv, ph, pv);
@@ -361,7 +387,8 @@ public class HomeActivity extends Activity {
         restyle.add(style);
         t.setOnFocusChangeListener((v, has) -> {
             style.run();
-            v.animate().scaleX(has ? focusScale() : 1f).scaleY(has ? focusScale() : 1f).setDuration(150).start();
+            v.animate().scaleX(has ? focusScale() : 1f).scaleY(has ? focusScale() : 1f).setDuration(250).setInterpolator(EASE).start();
+            if (has && keyNav) { keyNav = false; sound("move"); }
             if (has) label.setText(gear ? "Settings  ·  hold OK to change the Home Base code" : "Style  ·  colors, glows and effects");
         });
         t.setOnClickListener(v -> pressThen(v, null, open));
@@ -397,15 +424,18 @@ public class HomeActivity extends Activity {
     /** The page's look settings for the app's own buttons (glow style, which glow, strength, press effect, glow color). */
     private void setFx(String json) {
         if (json == null || json.length() > 4000 || json.equals(fxJson)) return;
+        String art = fxArt;
         parseFx(json);
         Hb.prefs(this).edit().putString("tileFx", json).apply();
         for (Runnable r : restyle) r.run();
+        if (!art.equals(fxArt)) recolorTiles();
     }
     private void parseFx(String json) {
         if (json == null || json.isEmpty()) return;
         try {
             org.json.JSONObject o = new org.json.JSONObject(json);
             fxBtn = o.optString("btn", fxBtn); fxWhich = o.optString("which", fxWhich); fxStr = o.optString("str", fxStr); fxPress = o.optString("press", fxPress);
+            fxTilt = o.optString("tilt", fxTilt); fxSheen = o.optString("sheen", fxSheen); fxSnd = o.optString("snd", fxSnd); fxVol = o.optString("vol", fxVol); fxArt = o.optString("art", fxArt);
             String g = o.optString("glow", "");
             fxGlow = g.matches("#[0-9a-fA-F]{6}") ? Color.parseColor(g) : 0;
             fxJson = json;
@@ -414,6 +444,7 @@ public class HomeActivity extends Activity {
     /** The chosen press effect (push in, pop out, squish or flash), then the tile opens. */
     private void pressThen(final View view, final View flash, final Runnable open) {
         final float f = view.hasFocus() ? focusScale() : 1f;
+        sound("ok");
         view.animate().cancel();
         Runnable back = () -> view.animate().scaleX(f).scaleY(f).setDuration(150).start();
         switch (fxPress) {
@@ -471,7 +502,7 @@ public class HomeActivity extends Activity {
             final ComponentName cn = new ComponentName(pkg, r.activityInfo.name);
             apps.add(new Tile(pkg, String.valueOf(r.loadLabel(pm)), art, isBanner, () -> {
                 Intent i = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER).setComponent(cn).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                try { startActivity(i); } catch (Exception e) { Toast.makeText(this, "That app wouldn't open.", Toast.LENGTH_SHORT).show(); }
+                try { startActivity(i); } catch (Exception e) { /* nothing on screen; the home screen stays */ }
             }));
         }
         // Apps moved to the front come first (in that order), then the rest A to Z.
@@ -609,9 +640,23 @@ public class HomeActivity extends Activity {
         look.run();
         restyle.add(look);
 
+        v.setCameraDistance(9000 * getResources().getDisplayMetrics().density);
         v.setOnFocusChangeListener((view, has) -> {
             look.run();
-            view.animate().scaleX(has ? focusScale() : 1f).scaleY(has ? focusScale() : 1f).translationZ(has ? 36f : 0f).setDuration(150).start();
+            boolean tilt = "on".equals(fxTilt);
+            android.view.ViewPropertyAnimator a = view.animate().scaleX(has ? focusScale() : 1f).scaleY(has ? focusScale() : 1f).translationZ(has ? 36f * Math.max(0.8f, fxK()) : 0f).setInterpolator(EASE);
+            if (has && tilt) {
+                // It lifts toward you, turned slightly toward the side the remote came from, then settles flat.
+                view.setRotationY(navDir * -10f); view.setRotationX(5f);
+                a.rotationY(0f).rotationX(0f).setDuration(400);
+            } else a.rotationY(0f).rotationX(0f).setDuration(has ? 250 : 150);
+            a.start();
+            if (has && "on".equals(fxSheen) && !"sweep".equals(fxBtn) && !"holo".equals(fxBtn)) {
+                // One soft band of light slides across the tile as it lifts.
+                sweep.animate().cancel(); sweep.setTranslationX(-tileW * 0.5f); sweep.setAlpha(1f);
+                sweep.animate().translationX(tileW * 1.05f).setDuration(400).setStartDelay(60).setInterpolator(EASE).withEndAction(() -> { if (!"sweep".equals(fxBtn) && !"holo".equals(fxBtn)) sweep.setAlpha(0f); }).start();
+            }
+            if (has && keyNav) { keyNav = false; sound("move"); }
             if (has) label.setText(t.name);
         });
         v.setOnClickListener(view -> pressThen(view, flash, t.open));
@@ -632,7 +677,7 @@ public class HomeActivity extends Activity {
      * first, so logos stay crisp against their background.
      */
     private android.graphics.Bitmap themedArt(Tile t, TileTheme theme) {
-        int w = Math.max(16, tileW), h = Math.max(9, tileH);
+        int w = Math.max(16, Math.round(tileW * 1.5f)), h = Math.max(9, Math.round(tileH * 1.5f));
         android.graphics.Bitmap bm = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888);
         android.graphics.Canvas c = new android.graphics.Canvas(bm);
         try {
@@ -645,6 +690,7 @@ public class HomeActivity extends Activity {
                 t.art.setBounds(x, y, x + s, y + s); t.art.draw(c);
             }
         } catch (Exception e) { c.drawColor(Color.DKGRAY); }
+        if ("real".equals(fxArt)) return bm;   // Style → App tiles → Original app art
         int[] px = new int[w * h];
         bm.getPixels(px, 0, w, 0, 0, w, h);
         int lo = 255, hi = 0;
@@ -664,6 +710,21 @@ public class HomeActivity extends Activity {
         for (int k = 0; k < n; k++) px[k] = lut[lum(px[k])] | 0xFF000000;
         bm.setPixels(px, 0, w, 0, 0, w, h);
         return bm;
+    }
+    /** For the status strip: "wifi:0".."wifi:3" (signal bars), "eth", or "none". */
+    private String netState() {
+        try {
+            android.net.ConnectivityManager cm = (android.net.ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+            android.net.NetworkCapabilities nc = cm == null ? null : cm.getNetworkCapabilities(cm.getActiveNetwork());
+            if (nc == null) return "none";
+            if (nc.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET)) return "eth";
+            if (nc.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI)) {
+                android.net.wifi.WifiManager wm = (android.net.wifi.WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+                int lvl = wm == null ? 3 : android.net.wifi.WifiManager.calculateSignalLevel(wm.getConnectionInfo().getRssi(), 4);
+                return "wifi:" + lvl;
+            }
+            return "eth";
+        } catch (Exception e) { return ""; }
     }
     private static int lum(int p) { return (((p >> 16) & 255) * 54 + ((p >> 8) & 255) * 183 + (p & 255) * 19) >> 8; }
     /** The icon's average color, so an icon-only app gets a tile in its own color before it's recolored. */
@@ -711,6 +772,8 @@ public class HomeActivity extends Activity {
         if (zen != null) zen.release();
         ui.removeCallbacksAndMessages(null);
         try { unregisterReceiver(appsChanged); } catch (Exception e) { /* not registered */ }
+        try { unregisterReceiver(screenOn); } catch (Exception e) { /* not registered */ }
+        if (snd != null) snd.release();
         if (web != null) { ((ViewGroup) web.getParent()).removeView(web); web.destroy(); }
         super.onDestroy();
     }

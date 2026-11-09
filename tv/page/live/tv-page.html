@@ -292,6 +292,137 @@ body.style-page .sty-card { width:min(96vw, 1500px) } body.style-page #sty { jus
 #sty .hbx-opt:not(.on) .hbx-pv * { animation-play-state:paused !important }
 #sty .hbx-opt.on .hbx-pvw { box-shadow:0 0 0 .35vh var(--hbx-glow) !important; animation:none !important; background-image:none !important }
 .sty-card { box-shadow:0 2vh 6vh rgba(0,0,0,.5) }
+/* ---------- premium polish (page 13) ----------
+   Foundation, always on: one display font (Bricolage Grotesque) for the clock and headings, one text font (Atkinson
+   Hyperlegible) for everything else; one spacing scale (8 / 16 / 24 / 48 px at 1080p, written in vh so it scales);
+   one easing and three speeds (150 / 250 / 400 ms). Things fade and slide a short way in, never pop.
+   Everything that can be switched lives on <html> as hbx-* classes set by the shared look (Style → each section). */
+:root { --s1:.741vh; --s2:1.481vh; --s3:2.222vh; --s4:4.444vh; --e:var(--hbx-e, cubic-bezier(.2,.8,.2,1)); --t1:150ms; --t2:250ms; --t3:400ms }
+
+/* Layout on the grid, with more room to breathe */
+#wrap { padding:calc(var(--s4) * 1.5) calc(var(--s4) * 2.25) var(--s3); gap:calc(var(--s4) * 1.5) }
+body.saver #wrap { padding:calc(var(--s4) * 2) calc(var(--s4) * 2.75) var(--s3) }
+/* A big, bold clock; lighter, smaller supporting text */
+#clock { font-weight:800; font-size:18vh; letter-spacing:-.045em; line-height:.86 }
+body.saver #clock { font-size:23vh }
+#clock .ap { font-family:var(--f-body); font-weight:400; font-size:.2em; letter-spacing:.12em; opacity:.8 }
+#date { margin-top:var(--s3); font-size:4.2vh; font-weight:500; letter-spacing:.005em }
+#wx { margin-top:var(--s4); gap:var(--s2); font-size:2.4vh; font-weight:400 }
+#wx b { font-weight:700 }
+#next { margin-top:var(--s4) }
+.right { padding:var(--s4) var(--s4) var(--s3); border-radius:var(--s3) }
+.lbl { font-size:1.6vh; letter-spacing:.2em; font-weight:700; opacity:.85 }
+#up { margin-top:var(--s2) }
+.ev { gap:var(--s2); padding:var(--s2) 0 }
+.ev .what { font-weight:600 } .ev.first .what { font-weight:700 }
+#dinner, #chores { gap:var(--s2); margin-top:var(--s2); font-size:2.4vh }
+#photo { border-radius:var(--s3) }
+
+/* One motion language: fade + short slide, 400 ms, the same easing everywhere */
+.left > *, .right, #photo { transform:translate3d(0,var(--s2),0); transition:opacity var(--t3) var(--e), transform var(--t3) var(--e) }
+body.ready #date { transition-delay:60ms } body.ready #wx { transition-delay:120ms } body.ready #next { transition-delay:180ms }
+body.ready .right, body.ready #photo { transition-delay:180ms }
+body.booting .left > *, body.booting .right, body.booting #photo, body.booting #pstrip { opacity:0 !important; transform:translate3d(0,var(--s2),0) !important; transition:none !important }
+.ev.in { animation:tv-row var(--t3) var(--e) both; animation-delay:calc(var(--n, 0) * 60ms) }
+@keyframes tv-row { from { opacity:0; transform:translate3d(var(--s2),0,0) } to { opacity:1; transform:none } }
+.swap { animation:tv-swap var(--t3) var(--e) both }
+@keyframes tv-swap { from { opacity:0; transform:translate3d(0,var(--s1),0) } to { opacity:1; transform:none } }
+:root { transition:--bg var(--t3) var(--e), --bg2 var(--t3) var(--e), --accent var(--t3) var(--e), --gold var(--t3) var(--e) }
+
+/* The slow ambient light behind everything; it drifts a few pixels a minute so the screen never looks frozen */
+#amb { position:fixed; inset:-4vh -4vw; pointer-events:none;
+  background:radial-gradient(70vh 55vh at 18% 22%, var(--glowA), transparent 70%), radial-gradient(60vh 50vh at 82% 70%, var(--glowG), transparent 70%); opacity:.7 }
+html.hbx-drift #amb { animation:pol-drift 900s ease-in-out infinite alternate }
+html.hbx-drift #pat { animation:pol-drift2 1200s ease-in-out infinite alternate }
+@keyframes pol-drift { to { transform:translate3d(-3vw,2.5vh,0) } }
+/* While Style is open the extra layers rest, so the panel's previews have the TV's graphics memory to themselves */
+body.sty-open #amb, body.sty-open #tod, body.sty-open #wxfx, body.sty-open #pat { display:none }
+@keyframes pol-drift2 { to { background-position:-6vw 4vh } }
+
+/* Time of day: warm mornings, deeper evenings, a calm dimmed night (only when switched on) */
+#tod { position:fixed; inset:0; pointer-events:none; opacity:0; transition:opacity var(--t3) var(--e);
+  background:radial-gradient(120vw 70vh at 50% -15%, var(--tod-c, transparent), transparent 70%), rgba(0,0,0,var(--tod-d, 0)) }
+html.hbx-tod #tod { opacity:1 }
+html.hbx-tod.tod-night #wrap { opacity:.86; transition:opacity var(--t3) var(--e) }
+
+/* Weather touches: a light rain shimmer, slow snow, frost in the corners on cold mornings */
+#wxfx { position:fixed; inset:0; pointer-events:none; overflow:hidden; contain:strict }
+#wxfx .rd { position:absolute; top:-12vh; width:1px; height:8vh; rotate:12deg; background:linear-gradient(transparent, rgba(205,228,255,.32)); will-change:transform; animation:wx-rain linear infinite }
+@keyframes wx-rain { to { transform:translate3d(-25vh,125vh,0) } }
+#wxfx .sf { position:absolute; top:-3vh; border-radius:50%; background:radial-gradient(circle, rgba(255,255,255,.85), rgba(255,255,255,0) 70%); will-change:transform; animation:wx-snow linear infinite }
+@keyframes wx-snow { 25% { transform:translate3d(1.5vw,28vh,0) } 50% { transform:translate3d(-1vw,56vh,0) } 75% { transform:translate3d(1.2vw,84vh,0) } to { transform:translate3d(-.5vw,110vh,0) } }
+#wxfx.frost::before { content:''; position:absolute; inset:0; opacity:.9;
+  background:radial-gradient(40vh 32vh at 0 0, rgba(215,236,255,.22), transparent 70%), radial-gradient(40vh 32vh at 100% 0, rgba(215,236,255,.18), transparent 70%),
+    radial-gradient(34vh 26vh at 0 100%, rgba(215,236,255,.14), transparent 70%), radial-gradient(34vh 26vh at 100% 100%, rgba(215,236,255,.12), transparent 70%) }
+
+/* Holidays: Subtle keeps the colors and fonts with a lighter pattern and no characters on the home screen */
+html[data-hbx-holi="subtle"] #pat { opacity:.045 }
+html[data-hbx-holi="subtle"] body.home #lane { display:none }
+
+/* Status strip: weather, Wi-Fi and who's home, top right */
+#pstrip { position:fixed; top:var(--s3); right:calc(var(--s4) * 2.25); z-index:4; display:flex; align-items:center; gap:var(--s2); padding:var(--s1) var(--s2);
+  border-radius:99px; background:color-mix(in srgb, var(--card) 70%, transparent); border:1px solid var(--line); border-top-color:rgba(255,255,255,.16);
+  font:400 1.8vh/1 var(--f-body); color:var(--ink2); opacity:1; transition:opacity var(--t3) var(--e) }
+#pstrip[hidden] { display:none }
+#pstrip > span { display:inline-flex; align-items:center; gap:var(--s1); white-space:nowrap }
+#pstrip b { color:var(--ink); font-weight:700 }
+#pstrip svg { width:2.2vh; height:2.2vh; color:var(--gold) }
+#pstrip .sep { width:1px; height:1.8vh; background:var(--line) }
+body.sty-open #pstrip { opacity:0 }
+
+/* Startup: the Home Base mark glows in, then the screen assembles */
+#boot { position:fixed; inset:0; z-index:40; display:grid; place-items:center; background:radial-gradient(60vh 40vh at 50% 50%, var(--glowA), transparent 70%), var(--bg); pointer-events:none }
+#boot[hidden] { display:none }
+#boot .bm { display:flex; align-items:center; gap:var(--s3); opacity:0; transform:scale(.96) }
+#boot svg { width:11vh; height:11vh; color:var(--accent); filter:drop-shadow(0 0 2vh var(--haloA)) }
+#boot b { font:800 8vh/1 var(--f-display); letter-spacing:-.03em; color:var(--ink); text-shadow:0 0 3vh var(--haloA) }
+#boot.go .bm { animation:boot-in var(--t3) var(--e) 100ms forwards, boot-glow 1.2s ease-in-out 500ms 1 }
+#boot.out { opacity:0; transition:opacity var(--t3) var(--e) }
+@keyframes boot-in { to { opacity:1; transform:none } }
+@keyframes boot-glow { 50% { filter:drop-shadow(0 0 3vh var(--haloA)) brightness(1.15) } }
+
+/* Screensaver photos: slow crossfades with a gentle pan and zoom (Ken Burns) when it's on */
+html.hbx-kb #photo img { transform:scale(1) translate3d(0,0,0); transition:transform var(--kbd, 17s) linear }
+html.hbx-kb #photo .ph.show img { transform:scale(var(--ks, 1.12)) translate3d(var(--kx, 0), var(--ky, 0), 0) }
+html:not(.hbx-kb) #photo img, html:not(.hbx-kb) #photo .ph.show img { transform:none; transition:none }
+
+/* Settings: a side panel that slides in from the right (where the Style button sits), the screen dimmed behind */
+#sty { padding:0; justify-content:flex-end; align-items:stretch; background:rgba(0,0,0,.32); animation:sty-scrim var(--t2) var(--e) both }
+@keyframes sty-scrim { from { background:rgba(0,0,0,0) } }
+body.sty-closing #sty { background:rgba(0,0,0,0); transition:background var(--t2) var(--e) }
+body.sty-closing .sty-card { transform:translate3d(100%,0,0); transition:transform var(--t2) var(--e) }
+.sty-card { width:min(68vw, 1400px); height:100vh; border-radius:var(--s3) 0 0 var(--s3); border-right:0; border-top-color:rgba(255,255,255,.16);
+  box-shadow:-2vh 0 6vh rgba(0,0,0,.45); animation:sty-in var(--t3) var(--e) both }
+@keyframes sty-in { from { transform:translate3d(100%,0,0) } to { transform:none } }
+.sty-h { padding:var(--s4) var(--s4) var(--s2) }
+.sty-pane { padding:var(--s2) var(--s3) var(--s4) }
+.sty-ni { display:grid; grid-template-columns:3vh minmax(0, 1fr); column-gap:var(--s2); align-items:center }
+.sty-ni .hbx-ic { grid-row:span 2; width:3vh; height:3vh; opacity:.85 }
+.sty-ni.cur .hbx-ic, .sty-ni.on .hbx-ic { color:var(--accent); opacity:1 }
+.sty-ni span { grid-column:2 }
+/* The panel stays easy to read: nearly solid in Performance mode, frosted (blurred) otherwise */
+html.hbx-on #sty .sty-card { background-color:color-mix(in srgb, var(--hbx-cardc) 96%, #000) !important }
+html.hbx-on.hbx-glass:not(.hbx-perf) #sty .sty-card { background-color:color-mix(in srgb, var(--hbx-cardc) 74%, transparent) !important; -webkit-backdrop-filter:blur(24px) saturate(1.35); backdrop-filter:blur(24px) saturate(1.35) }
+body.style-page .sty-card { height:94vh; border-radius:var(--s3); border-right:1px solid color-mix(in srgb, var(--accent) 55%, transparent) }
+/* Highlighted tiles in the panel lift toward you (tilt) and catch a sheen */
+.hbx-opt { transition:scale var(--t1) var(--e), transform var(--t2) var(--e), background var(--t1) var(--e), color var(--t1) var(--e) }
+html.hbx-tilt #sty .hbx-opt.on { transform:perspective(60vh) rotateX(5deg) translate3d(0,-.4vh,0) }
+#sty .hbx-pvw { position:relative; overflow:hidden }
+html.hbx-sheen #sty .hbx-opt.on .hbx-pvw::after { content:''; position:absolute; inset:0; z-index:2; pointer-events:none; border-radius:inherit;
+  background:linear-gradient(100deg, transparent 30%, rgba(255,255,255,.28) 50%, transparent 70%); animation:pol-sheen var(--t3) var(--e) both }
+@keyframes pol-sheen { from { transform:translate3d(-110%,0,0) } to { transform:translate3d(110%,0,0) } }
+
+/* Performance mode (on by default on the TV box): no blur, no weather or drift layers, lighter effects */
+html.hbx-perf #wxfx .sf:nth-child(n+13), html.hbx-perf #wxfx .rd:nth-child(n+19) { display:none }
+@media (prefers-reduced-motion: reduce) {
+  #amb, #pat, #wxfx *, #boot .bm, .ev.in, .swap { animation:none !important }
+  html.hbx-kb #photo img { transition:none !important; transform:none !important }
+}
+/* The section list stays one line per name and hint on the TV */
+.sty-body { grid-template-columns:22vw minmax(0, 1fr) }
+.sty-ni b, .sty-ni span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+.sty-ni b { font-size:2.1vh } .sty-ni span { font-size:1.3vh }
+.sty-nav { gap:var(--s1); padding:var(--s2) var(--s2) }
 
 .stk { display:inline-block; width:var(--sz, 48px); height:var(--sz, 48px); flex:none; transform:rotate(var(--r0, 0deg)); pointer-events:none }
 .stk-a { display:block; width:100%; height:100%; animation:var(--an, none) var(--du, 4s) ease-in-out var(--dl, 0s) infinite; transform-origin:50% 60%; will-change:transform }
@@ -381,7 +512,7 @@ body.style-page .sty-card { width:min(96vw, 1500px) } body.style-page #sty { jus
    ========================================================================================================== */
 window.HBLook = window.HBLook || (() => {
   'use strict';
-  const VER = '1.0';
+  const VER = '1.1';
   const E = 'cubic-bezier(.2,.8,.2,1)';   /* the one easing; durations are 150, 250 and 400 ms */
 
   /* ---------- small helpers ---------- */
@@ -436,6 +567,15 @@ window.HBLook = window.HBLook || (() => {
   const OFTEN = [['rare', 'Now and then'], ['some', 'Sometimes'], ['often', 'Often']];
   const OFTEN_MS = { rare: 12 * 60e3, some: 5 * 60e3, often: 100e3 };
   const STR_K = { subtle: 0.6, normal: 1, strong: 1.6 };
+  /* The feel settings: each effect has its own switch (they don't change the quick look). Calm by default. */
+  const ON = [['on', 'On'], ['off', 'Off']];
+  const HOLI = [['subtle', 'Subtle'], ['full', 'Full'], ['off', 'Off']];
+  const VOL = [['low', 'Quiet'], ['mid', 'Medium'], ['high', 'Loud']];
+  const SPEED = [['slow', 'Slow'], ['normal', 'Normal'], ['fast', 'Fast']];
+  const FUN = [['calm', 'Calm'], ['playful', 'Playful'], ['party', 'Party']];
+  const ART = [['theme', 'In my colors'], ['real', 'Original app art']];
+  const FEEL = { tilt: ON, sheen: ON, glass: ON, drift: ON, tod: ON, wx: ON, holi: HOLI, snd: ON, vol: VOL, strip: ON, boot: ON, kb: ON, kbSpeed: SPEED, fun: FUN, art: ART };
+  const FEEL_DEF = { tilt: 'on', sheen: 'on', glass: 'on', drift: 'on', tod: 'off', wx: 'off', holi: 'subtle', snd: 'off', vol: 'low', strip: 'on', boot: 'on', kb: 'on', kbSpeed: 'normal', fun: 'calm', art: 'theme' };
 
   /* Quick looks: one press sets everything (colors included). Classic clears the part colors. */
   const QUICK = [
@@ -453,12 +593,16 @@ window.HBLook = window.HBLook || (() => {
       colors: { bg: '#03040C', card: '#0B0E22', head: '#9DB4FF', hi: '#C9A7FF', glow: '#7A8CFF', clock: '#E6E9FF', btn: '#1B2160' } }]
   ];
   const DEF = { quick: 'classic', colors: {}, clock: 'soft', clockAnim: 'slide', date: 'plain', dateAnim: 'fade', btn: 'soft', which: 'sel', str: 'normal',
-    press: 'push', card: 'soft', motion: '', mset: 'match', pals: 'on', palsOften: 'some', ts: 0 };
-  const LISTS = { clock: TEXT_FX, date: TEXT_FX, clockAnim: TICKS, dateAnim: TICKS, btn: BTNS, which: WHICH, str: STRENGTH, press: PRESS, card: CARDS, motion: MOTIONS, mset: MSETS, pals: PALS_ON, palsOften: OFTEN };
+    press: 'push', card: 'soft', motion: '', mset: 'match', pals: 'on', palsOften: 'some', ...FEEL_DEF, ts: 0 };
+  const LISTS = { clock: TEXT_FX, date: TEXT_FX, clockAnim: TICKS, dateAnim: TICKS, btn: BTNS, which: WHICH, str: STRENGTH, press: PRESS, card: CARDS, motion: MOTIONS, mset: MSETS, pals: PALS_ON, palsOften: OFTEN, ...FEEL };
+  const NOT_LOOK = new Set(['pals', 'palsOften', ...Object.keys(FEEL)]);
   function norm(o) {
     o = o && typeof o === 'object' ? o : {};
     const L = { ...DEF };
     Object.keys(LISTS).forEach(k => { if (LISTS[k].some(x => x[0] === o[k])) L[k] = o[k]; });
+    /* Settings saved before the Fun level existed keep their characters (on = Playful). */
+    if (!FUN.some(x => x[0] === o.fun) && o.pals) L.fun = o.pals === 'off' ? 'calm' : o.palsOften === 'often' ? 'party' : 'playful';
+    L.pals = L.fun === 'calm' ? 'off' : 'on';
     L.quick = QUICK.some(q => q[0] === o.quick) ? o.quick : (o.quick === '' ? '' : DEF.quick);
     L.colors = {}; PARTS.forEach(([k]) => { if (o.colors && isHex(o.colors[k])) L.colors[k] = o.colors[k].toUpperCase(); });
     L.ts = +o.ts || 0;
@@ -470,7 +614,8 @@ window.HBLook = window.HBLook || (() => {
     if (key === 'quick') { const q = QUICK.find(x => x[0] === val); if (q) Object.assign(n, JSON.parse(JSON.stringify(q[2])), { quick: val }); }
     else if (key === 'color') { const [part, c] = val; if (isHex(c)) n.colors[part] = c.toUpperCase(); else delete n.colors[part]; n.quick = ''; }
     else if (key === 'colorsReset') { n.colors = {}; n.quick = ''; }
-    else if (LISTS[key]) { n[key] = val; if (!['pals', 'palsOften'].includes(key)) n.quick = ''; }
+    else if (key === 'recommended') { const keep = n.ts; Object.assign(n, JSON.parse(JSON.stringify(DEF)), JSON.parse(JSON.stringify(QUICK[0][2])), { quick: 'classic', colors: {}, ts: keep }); }
+    else if (LISTS[key]) { n[key] = val; if (!NOT_LOOK.has(key)) n.quick = ''; }
     n.ts = Date.now();
     return norm(n);
   }
@@ -589,6 +734,13 @@ ${Object.keys(PRESS_KF).map(k => `html[data-hbx-press="${k}"] .hbx-press{${PRESS
     if (s.press) c += `${pre(R, s.press.split(',').map(x => x.trim() + ':active').join(','))}{${PRESS_KF[L.press]};transition:scale 150ms ${E},filter 150ms ${E}}\n`;
     if (s.btnFill && L.colors.btn) c += `${pre(R, s.btnFill)}{background-color:var(--hbx-btn)!important;color:var(--hbx-btnink)!important;border-color:var(--hbx-btn)!important}\n`;
     if (s.card && CARD_CSS[L.card]) c += sub(CARD_CSS[L.card], pre(R, s.card)) + '\n';
+    const gl = [s.card, s.glass].filter(Boolean).join(',');
+    if (gl) {
+      c += `${pre(R, gl)}{border-top-color:rgba(255,255,255,.16)!important}\n`;
+      if (L.glass === 'on') c += `${pre(R + ':not(.hbx-perf)', gl)}{background-color:color-mix(in srgb,var(--hbx-cardc) 58%,transparent)!important;-webkit-backdrop-filter:blur(24px) saturate(1.35);backdrop-filter:blur(24px) saturate(1.35)}\n`
+        + `${pre(R + '.hbx-perf', gl)}{background-color:color-mix(in srgb,var(--hbx-cardc) 86%,transparent)!important}\n`;
+      else c += `${pre(R, gl)}{background-color:color-mix(in srgb,var(--hbx-cardc) 97%,#000)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}\n`;
+    }
     if (s.headText && L.colors.head) c += `${pre(R, s.headText)}{color:var(--hbx-headc)!important}\n`;
     if (s.hiText && L.colors.hi) c += `${pre(R, s.hiText)}{color:var(--hbx-hi)!important}\n`;
     return c;
@@ -851,13 +1003,16 @@ html.hbx-perf .mo-neongrid .ng-haze,html.hbx-perf .mo-neongrid .ng-sun{filter:no
 .hbx-pal.hop{left:0;bottom:var(--hbx-safe,0px);animation:pl-zip 9s linear forwards}
 .hbx-pal.hop > svg{animation:pl-hop .75s ease-in-out infinite;transform-origin:50% 100%}
 @keyframes pl-hop{0%,100%{translate:0 0;scale:1.06 .94}45%{translate:0 -32%;scale:.96 1.05}}
+.hbx-confetti{position:fixed;inset:0;z-index:31;pointer-events:none;overflow:hidden}
+.hbx-confetti i{position:absolute;top:-4vh;width:1vh;height:1.6vh;border-radius:2px;opacity:.9;animation:hbx-fall linear both}
+@keyframes hbx-fall{to{transform:translate3d(4vw,112vh,0) rotate(540deg);opacity:.7}}
 .hbx-pal .pl-trail{position:absolute;right:90%;top:40%;width:60%;height:14%;border-radius:9px;background:linear-gradient(90deg,transparent,var(--hbx-hi));opacity:.6}
 `;
   let palN = 0;
   function palVisit(force) {
-    if (!force && (L.pals !== 'on' || document.hidden || still() || H.busy())) return;
+    if (!force && (L.fun === 'calm' || document.hidden || still() || H.busy())) return;
     if (document.querySelector('.hbx-pal')) return;
-    const n = PAL_NAMES[palN % PAL_NAMES.length], mode = ['peek', 'zip', 'hop'][palN % 3]; palN++;
+    const n = PAL_NAMES[palN % PAL_NAMES.length], mode = typeof force === 'string' ? force : ['peek', 'zip', 'hop'][palN % 3]; palN++;
     const el = document.createElement('div'); el.className = 'hbx-pal ' + mode;
     el.style.setProperty('--hbx-safe', H.safeBottom || '0px');
     el.innerHTML = (mode === 'zip' ? '<i class="pl-trail"></i>' : '') + palSvg(n);
@@ -866,9 +1021,30 @@ html.hbx-perf .mo-neongrid .ng-haze,html.hbx-perf .mo-neongrid .ng-sun{filter:no
   }
   function palSchedule() {
     clearTimeout(palT);
-    if (L.pals !== 'on') { document.querySelectorAll('.hbx-pal').forEach(x => x.remove()); return; }
-    const ms = OFTEN_MS[L.palsOften] || OFTEN_MS.some;
+    if (L.fun === 'calm') { document.querySelectorAll('.hbx-pal').forEach(x => x.remove()); return; }
+    greet();
+    const ms = L.fun === 'party' ? Math.min(OFTEN_MS[L.palsOften] || OFTEN_MS.some, OFTEN_MS.often) : OFTEN_MS[L.palsOften] || OFTEN_MS.some;
     palT = setTimeout(() => { palVisit(); palSchedule(); }, ms * (0.75 + Math.random() * 0.5));
+  }
+
+  /* A character peeks up and waves the first time the screen is seen each day (after 5 am). */
+  function greet() {
+    if (L.fun === 'calm' || document.hidden || still() || H.busy() || new Date().getHours() < 5) return;
+    const day = new Date().toDateString(); let last = '';
+    try { last = localStorage.getItem('hbx.greet') || ''; } catch (e) {}
+    if (last === day) return;
+    try { localStorage.setItem('hbx.greet', day); } catch (e) {}
+    setTimeout(() => palVisit('peek'), 2500);
+  }
+  /* Chores all done: a character hops across (Party adds a burst of confetti). */
+  function cheer() {
+    if (L.fun === 'calm' || document.hidden || still()) return;
+    palVisit('hop');
+    if (L.fun !== 'party' || H.perf()) return;
+    const box = document.createElement('div'); box.className = 'hbx-confetti'; box.setAttribute('aria-hidden', 'true');
+    const cols = [PAINTED ? PAINTED.glow : '#6DC2A4', PAINTED ? PAINTED.hi : '#F0B43C', '#FF8FB1', '#ffffff'], r = rng(Date.now());
+    let h = ''; for (let i = 0; i < 36; i++) h += `<i style="left:${f1(r() * 100)}vw;background:${cols[i % 4]};animation-delay:${f1(r() * 0.6)}s;animation-duration:${f1(2.4 + r() * 1.4)}s;rotate:${Math.round(r() * 360)}deg"></i>`;
+    box.innerHTML = h; document.body.appendChild(box); setTimeout(() => box.remove(), 4500);
   }
 
   /* ---------- keeping repeating animations in step with the clock ----------
@@ -896,6 +1072,8 @@ html.hbx-perf .mo-neongrid .ng-haze,html.hbx-perf .mo-neongrid .ng-sun{filter:no
     R.classList.add('hbx-on');
     R.classList.toggle('hbx-perf', !!H.perf());
     R.dataset.hbxPress = L.press;
+    ['tilt', 'sheen', 'glass', 'drift', 'tod', 'wx', 'strip', 'boot', 'kb'].forEach(k => R.classList.toggle('hbx-' + k, L[k] === 'on'));
+    R.dataset.hbxHoli = L.holi; R.dataset.hbxFun = L.fun;
     if (rootEl) { const css = rootCss(); if (rootEl.textContent !== css) rootEl.textContent = css; }
     paint();
     mountMotion();
@@ -907,7 +1085,7 @@ html.hbx-perf .mo-neongrid .ng-haze,html.hbx-perf .mo-neongrid .ng-sun{filter:no
   /* What the TV app needs for its own tiles: glow style, which tiles, strength, press effect and the colors. */
   function fxForApp() {
     const c = PAINTED || {};
-    return { btn: L.btn, which: L.which, str: L.str, press: L.press, glow: L.colors.glow ? c.glow : '' };
+    return { btn: L.btn, which: L.which, str: L.str, press: L.press, glow: L.colors.glow ? c.glow : '', tilt: L.tilt, sheen: L.sheen, snd: L.snd, vol: L.vol, art: L.art };
   }
   /* A press on a remote: the pressed element does the chosen press effect. */
   function press(el) {
@@ -927,6 +1105,33 @@ html.hbx-perf .mo-neongrid .ng-haze,html.hbx-perf .mo-neongrid .ng-sun{filter:no
 .hbx-pv .pv-scene{position:absolute;inset:0;display:grid;grid-template-columns:1.1fr 1fr;gap:6%;padding:9% 8%;box-sizing:border-box;align-items:center}
 .hbx-pv .pv-scene .hbx-tx{font-size:1.5em}.hbx-pv .pv-scene .hbx-cd{width:100%;height:78%}
 .hbx-pv .pv-pal{width:42%;aspect-ratio:1}
+.hbx-pv .pv-off{opacity:.6;font-weight:700}
+.hbx-pv .pv-snd{width:30%;aspect-ratio:1;color:var(--hbx-glow);position:relative}.hbx-pv .pv-snd svg{width:100%;height:100%}.hbx-pv .pv-snd.off{color:currentColor;opacity:.6}
+.hbx-pv .pv-snd.off::after{content:'';position:absolute;left:-6%;right:-6%;top:50%;height:2px;background:currentColor;rotate:-35deg}
+.hbx-pv .pv-big{font-size:2.2em;line-height:1}.hbx-pv .pv-dim{opacity:.55;font-size:1.6em}
+.hbx-pv.pv-persp{perspective:300px}
+.hbx-pv .pv-card{position:relative;z-index:1;width:56%;height:58%;border-radius:12%;background:var(--hbx-cardc,#1a2420);border:1px solid rgba(255,255,255,.14);border-top-color:rgba(255,255,255,.3);display:flex;flex-direction:column;justify-content:center;gap:14%;padding:0 12%;box-sizing:border-box;overflow:hidden;box-shadow:0 8px 18px rgba(0,0,0,.35)}
+.hbx-pv .pv-card i{display:block;height:10%;border-radius:9px;background:currentColor;opacity:.35}.hbx-pv .pv-card i:first-child{width:60%;opacity:.8;background:var(--hbx-glow)}
+.hbx-pv .pv-tilt{animation:pv-tilt 3.2s ${E} infinite;box-shadow:0 12px 24px var(--hbx-g2)}
+@keyframes pv-tilt{0%,100%{transform:rotateY(-12deg) rotateX(4deg) scale(1.04)}50%{transform:rotateY(12deg) rotateX(-4deg) scale(1.04)}}
+.hbx-pv .pv-sheen::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.4) 50%,transparent 70%);animation:pv-sheen 2.4s ${E} infinite}
+@keyframes pv-sheen{from{translate:-110% 0}60%,to{translate:110% 0}}
+.hbx-pv .pv-blobs{position:absolute;inset:-20%;background:radial-gradient(circle at 30% 40%,var(--hbx-glow) 0 14%,transparent 30%),radial-gradient(circle at 70% 60%,var(--hbx-hi) 0 12%,transparent 28%),radial-gradient(circle at 50% 20%,#FF8FB1 0 8%,transparent 22%)}
+.hbx-pv .pv-drift{animation:pv-drift 6s ease-in-out infinite alternate}
+@keyframes pv-drift{to{translate:8% -6%}}
+.hbx-pv .pv-glass{background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}.hbx-pv .pv-solid{background:var(--hbx-cardc,#1a2420)}
+.hbx-pv .pv-tod{position:absolute;inset:0;background:linear-gradient(90deg,#F6B26B,#7AB8E8 35%,#4B3A7A 70%,#0B0E1E)}
+.hbx-pv .pv-tag{position:relative;padding:.2em .7em;border-radius:9px;background:rgba(0,0,0,.45);color:#fff;font-weight:700}
+.hbx-pv .pv-rain{position:absolute;inset:-50% 0 0;background:repeating-linear-gradient(105deg,transparent 0 9px,rgba(200,225,255,.35) 9px 10px);animation:pv-rain 1s linear infinite}
+@keyframes pv-rain{to{translate:-8px 50%}}
+.hbx-pv .pv-bars{display:flex;align-items:flex-end;gap:10%;width:34%;height:56%}.hbx-pv .pv-bars i{flex:1;border-radius:3px;background:rgba(255,255,255,.2)}.hbx-pv .pv-bars i.on{background:var(--hbx-glow)}
+.hbx-pv .pv-strip{position:absolute;top:10%;right:6%;padding:.2em .6em;border-radius:99px;background:rgba(255,255,255,.12);font-size:.62em;font-weight:700;white-space:nowrap}
+.hbx-pv .pv-logo{font-size:2.6em;line-height:1;color:var(--hbx-neonc,#fff);text-shadow:0 0 .2em var(--hbx-glow),0 0 .5em var(--hbx-g1);animation:pv-boot 2.8s ${E} infinite}
+@keyframes pv-boot{0%{opacity:0;scale:.9}25%,75%{opacity:1;scale:1}100%{opacity:0;scale:1}}
+.hbx-pv .pv-photo{position:absolute;inset:0;background:radial-gradient(circle at 70% 30%,rgba(255,255,255,.55) 0 10%,transparent 11%),linear-gradient(135deg,#E8913A,#6B2E7A)}
+.hbx-pv .pv-kb{animation:pv-kb var(--kbd,5.5s) linear infinite alternate}
+@keyframes pv-kb{to{scale:1.18;translate:-5% 3%}}
+.hbx-pv .pv-conf{position:absolute;inset:0;background:radial-gradient(circle,#FF8FB1 0 2px,transparent 3px) 0 0/22px 22px,radial-gradient(circle,var(--hbx-hi) 0 2px,transparent 3px) 11px 11px/22px 22px;opacity:.7;animation:pv-rain 2s linear infinite}
 .hbx-pv .pv-pop{animation:pv-pop var(--pd,4s) ${E} infinite}
 @keyframes pv-pop{0%,100%{translate:0 70%;opacity:0}15%,60%{translate:0 0;opacity:1}75%{translate:0 70%;opacity:0}}
 .hbx-pv .pv-parts{position:absolute;inset:0;padding:8%;box-sizing:border-box;display:grid;grid-template-columns:1fr 1.1fr;gap:6%;align-items:center}
@@ -972,11 +1177,36 @@ html.hbx-perf .hbx-opt:not(.on):not(:hover) .hbx-pv *{animation-play-state:pause
       case 'pals': h = id === 'on' ? `<div class="hbx-pv"><div class="pv-pal">${palSvg('momo')}</div></div>` : '<div class="hbx-pv"><span style="opacity:.6;font-weight:700">Off</span></div>'; break;
       case 'palsOften': h = `<div class="hbx-pv"><div class="pv-pal pv-pop" style="--pd:${id === 'rare' ? 6 : id === 'some' ? 3.6 : 2}s">${palSvg(id === 'rare' ? 'kiki' : id === 'some' ? 'bolt' : 'tofu')}</div></div>`; break;
       case 'part': h = partPreview(id); break;
+      case 'fun': h = id === 'calm' ? '<div class="hbx-pv"><span class="pv-off">Calm</span></div>' : `<div class="hbx-pv">${id === 'party' ? '<i class="pv-conf"></i>' : ''}<div class="pv-pal pv-pop" style="--pd:${id === 'party' ? 2 : 3.6}s">${palSvg(id === 'party' ? 'kiki' : 'momo')}</div></div>`; break;
+      default: if (FEEL[key]) { h = feelPreview(key, id); break; }
       case 'swatch': h = `<div class="hbx-pv"><i class="pv-sw" style="--sw:${id}"></i></div>`; break;
-      default: h = `<div class="hbx-pv"></div>`;
+        h = `<div class="hbx-pv"></div>`;
     }
     PV.set(k, h);
     return h;
+  }
+  /* The feel switches: a small picture of what each one does ("Off" shows it plain). */
+  const OFF = '<span class="pv-off">Off</span>';
+  function feelPreview(key, id) {
+    const on = id !== 'off', card = cls => `<div class="pv-card ${cls || ''}"><i></i><i></i></div>`;
+    switch (key) {
+      case 'tilt': return `<div class="hbx-pv pv-persp">${card(on ? 'pv-tilt' : '')}</div>`;
+      case 'sheen': return `<div class="hbx-pv">${card(on ? 'pv-sheen' : '')}</div>`;
+      case 'glass': return `<div class="hbx-pv"><div class="pv-blobs"></div>${card(on ? 'pv-glass' : 'pv-solid')}</div>`;
+      case 'drift': return `<div class="hbx-pv"><div class="pv-blobs${on ? ' pv-drift' : ''}"></div></div>`;
+      case 'tod': return on ? '<div class="hbx-pv"><div class="pv-tod"></div><span class="pv-tag">☀ → ☾</span></div>' : `<div class="hbx-pv">${OFF}</div>`;
+      case 'wx': return on ? '<div class="hbx-pv pv-rainbox"><i class="pv-rain"></i><span class="pv-big">🌧</span></div>' : `<div class="hbx-pv">${OFF}</div>`;
+      case 'holi': return id === 'off' ? `<div class="hbx-pv">${OFF}</div>` : `<div class="hbx-pv"><span class="pv-big${id === 'full' ? '' : ' pv-dim'}">${id === 'full' ? '🎃 🎄 🎉' : '🎃'}</span></div>`;
+      case 'snd': return `<div class="hbx-pv"><span class="pv-snd${on ? '' : ' off'}">${ICONS.sound}</span></div>`;
+      case 'vol': return `<div class="hbx-pv"><span class="pv-bars">${[1, 2, 3].map(n => `<i class="${n <= (id === 'low' ? 1 : id === 'mid' ? 2 : 3) ? 'on' : ''}" style="height:${n * 28}%"></i>`).join('')}</span></div>`;
+      case 'strip': return on ? '<div class="hbx-pv"><span class="pv-strip">☁ 54° · ▂▄▆ · 2 home</span></div>' : `<div class="hbx-pv">${OFF}</div>`;
+      case 'boot': return on ? '<div class="hbx-pv"><span class="pv-logo">⌂</span></div>' : `<div class="hbx-pv">${OFF}</div>`;
+      case 'kb': return `<div class="hbx-pv"><div class="pv-photo${on ? ' pv-kb' : ''}"></div></div>`;
+      case 'kbSpeed': return `<div class="hbx-pv"><div class="pv-photo pv-kb" style="--kbd:${id === 'slow' ? 9 : id === 'fast' ? 3 : 5.5}s"></div></div>`;
+      case 'art': return id === 'real' ? '<div class="hbx-pv"><div class="pv-stripes"><i style="background:#E50914"></i><i style="background:#1CE783"></i><i style="background:#FF0000"></i><i style="background:#00A8E1"></i></div></div>'
+        : '<div class="hbx-pv"><div class="pv-stripes"><i style="background:var(--hbx-glow)"></i><i style="background:color-mix(in srgb,var(--hbx-glow) 60%,#000)"></i><i style="background:var(--hbx-hi)"></i><i style="background:color-mix(in srgb,var(--hbx-glow) 40%,#fff)"></i></div></div>';
+    }
+    return '<div class="hbx-pv"></div>';
   }
   /* For a color part: a tiny screen with that part outlined. */
   function partPreview(part) {
@@ -989,26 +1219,49 @@ html.hbx-perf .hbx-opt:not(.on):not(:hover) .hbx-pv *{animation-play-state:pause
   function forgetColorPreviews() { [...PV.keys()].forEach(k => { if (/^(part|motion|mset):/.test(k)) PV.delete(k); }); }
 
   /* ---------- the menu: groups and their options, shared by the wall's Settings and the TV's Style panel ---------- */
+  /* Section icons (simple line drawings in the text color). */
+  const ic = d => `<svg class="hbx-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const ICONS = {
+    quick: ic('<path d="M12 3l2.4 5.6L20 9.2l-4.3 3.9 1.2 5.9L12 16l-4.9 3 1.2-5.9L4 9.2l5.6-.6z"/>'),
+    colors: ic('<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.6-.8 1.6-1.6 0-1.2-1-1.4-1-2.4 0-.9.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>'),
+    clock: ic('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
+    buttons: ic('<rect x="3.5" y="7" width="17" height="10" rx="5"/><path d="M8 12h8"/>'),
+    cards: ic('<rect x="4" y="5" width="16" height="14" rx="3"/><path d="M4 9.5h16"/>'),
+    motion: ic('<path d="M3 15c3-6 6 2 9-4s6 2 9-2"/><path d="M3 20c3-4 6 1 9-2.5S18 19 21 16"/>'),
+    holidays: ic('<path d="M12 3l5 8h-3l4 6H6l4-6H7z"/><path d="M12 17v4"/>'),
+    fun: ic('<circle cx="12" cy="12" r="8.5"/><path d="M8.5 14.5c1.8 2 5.2 2 7 0"/><circle cx="9" cy="10" r=".9" fill="currentColor"/><circle cx="15" cy="10" r=".9" fill="currentColor"/>'),
+    screen: ic('<rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8.5 20h7M12 16.5V20"/>'),
+    sound: ic('<path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>')
+  };
+  /* ---------- the menu: groups and their options, shared by the wall's Settings (Look & feel) and the TV's Style panel ---------- */
   const SECTIONS = [
     { id: 'quick', name: 'Quick looks', hint: 'One press sets everything', groups: [{ key: 'quick', name: 'Quick looks', opts: QUICK.map(q => [q[0], q[1]]) }] },
     { id: 'colors', name: 'Colors', hint: 'Your own color for each part', groups: [{ key: 'part', name: 'Pick a part, then a color', opts: PARTS }] },
     { id: 'clock', name: 'Clock & date', hint: 'Styles and number animations', groups: [
       { key: 'clock', name: 'Clock style', opts: TEXT_FX }, { key: 'clockAnim', name: 'When the minute changes', opts: TICKS },
       { key: 'date', name: 'Date style', opts: TEXT_FX }, { key: 'dateAnim', name: 'When the date changes', opts: TICKS }] },
-    { id: 'buttons', name: 'Buttons & glows', hint: 'Glow, which buttons, strength, press', groups: [
+    { id: 'buttons', name: 'Buttons & glows', hint: 'Glow, tilt, sheen, press', groups: [
       { key: 'btn', name: 'Glow style', opts: BTNS }, { key: 'which', name: 'Which buttons glow', opts: WHICH },
-      { key: 'str', name: 'Strength', opts: STRENGTH }, { key: 'press', name: 'When pressed', opts: PRESS }] },
-    { id: 'cards', name: 'Cards & panels', hint: 'How the cards look', groups: [{ key: 'card', name: 'Card style', opts: CARDS }] },
-    { id: 'motion', name: 'Background motion', hint: 'Moving backgrounds and characters', groups: [
+      { key: 'str', name: 'Glow strength', opts: STRENGTH }, { key: 'tilt', name: 'Tilt toward you when highlighted', opts: ON },
+      { key: 'sheen', name: 'Light sheen when highlighted', opts: ON }, { key: 'press', name: 'When pressed', opts: PRESS }] },
+    { id: 'cards', name: 'Cards & panels', hint: 'Card style and frosted glass', groups: [{ key: 'card', name: 'Card style', opts: CARDS },
+      { key: 'glass', name: 'Frosted glass panels', opts: ON }] },
+    { id: 'motion', name: 'Background motion', hint: 'Moving backgrounds, light and weather', groups: [
       { key: 'motion', name: 'Futuristic motion', opts: MOTIONS }, { key: 'mset', name: 'Motion colors', opts: MSETS.map(m => [m[0], m[1]]) },
-      { key: 'pals', name: 'Fun characters', opts: PALS_ON }, { key: 'palsOften', name: 'How often they visit', opts: OFTEN }] },
-    { id: 'holidays', name: 'Holidays', hint: 'Holiday themes and their characters', groups: [] }
+      { key: 'drift', name: 'Slow background drift', opts: ON }, { key: 'tod', name: 'Time-of-day lighting', opts: ON },
+      { key: 'wx', name: 'Weather touches (rain, frost)', opts: ON }] },
+    { id: 'holidays', name: 'Holidays', hint: 'Holiday themes and their characters', groups: [{ key: 'holi', name: 'Holiday touches', opts: HOLI }] },
+    { id: 'fun', name: 'Fun', hint: 'Characters that visit now and then', groups: [{ key: 'fun', name: 'Fun level', opts: FUN }, { key: 'palsOften', name: 'How often they visit', opts: OFTEN }] }
   ];
+  /* Screen & sound settings (the TV adds these as their own section; the wall can show them under Screen & sound). */
+  const SCREEN = [{ key: 'snd', name: 'Navigation sounds', opts: ON }, { key: 'vol', name: 'Sound volume', opts: VOL },
+    { key: 'strip', name: 'Status strip (weather, Wi-Fi, who\'s home)', opts: ON }, { key: 'boot', name: 'Startup animation', opts: ON },
+    { key: 'kb', name: 'Screensaver photo zoom', opts: ON }, { key: 'kbSpeed', name: 'Screensaver speed', opts: SPEED }, { key: 'art', name: 'App tiles', opts: ART }];
   const cur = key => key === 'quick' ? L.quick : L[key];
 
   return {
     VER, init, apply, paint, lock, press, preview, forgetColorPreviews, set, norm, name, cur, get: () => L, painted: () => PAINTED,
-    SECTIONS, PARTS, SWATCHES, QUICK, LISTS, hsl, readable, contrast, mix, isHex, esc, palVisit, motionHtml
+    SECTIONS, SCREEN, ICONS, FEEL, PARTS, SWATCHES, QUICK, LISTS, hsl, readable, contrast, mix, isHex, esc, palVisit, greet, cheer, motionHtml
   };
 })();
 
@@ -1909,7 +2162,7 @@ async function sendTileTheme(ht, main, tk) {
      tiles on every press is what made the screen flash). */
   if (PANEL && PANEL.open) { PANEL.tilesLater = [ht, main, tk]; return; }
   const key = D.look, stickers = [];
-  if (ht) {
+  if (ht && styLoad().hbx.holi === 'full') {
     const c = { ...HOL_BASE, ...ht.c }, names = [...new Set([...(ht.chars || []), ...ht.motifs])].filter(n => MOTIFS[n]).slice(0, 8);
     for (const n of names) { try { stickers.push(await stickerPng(MOTIFS[n](c, { id: 'tile' + n, t: 0, still: true }))); } catch (e) { /* skip that one */ } }
   }
@@ -2038,7 +2291,7 @@ function nextPhoto() {
   const img = new Image();
   img.onload = () => {
     const box = $('#photo'), el = document.createElement('div');
-    el.className = 'ph';
+    el.className = 'ph'; polKb(el);
     el.innerHTML = `<div class="bk"></div>`;
     /* The blurred backdrop: a tiny pre-blurred copy of the photo stretched up looks just as soft as a live blur and costs
        almost nothing to show. Falls back to the blur filter if the copy can't be made. */
@@ -2052,7 +2305,7 @@ function nextPhoto() {
     requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
     const old = PH.cur; PH.cur = el;
     if (old) { old.classList.remove('show'); setTimeout(() => old.remove(), 2200); }
-    PH.timer = setTimeout(nextPhoto, PHOTO_MS);
+    PH.timer = setTimeout(nextPhoto, polPhotoMs());
   };
   /* A photo that won't load is skipped (it may have just been removed on the wall). */
   img.onerror = () => { PH.timer = setTimeout(nextPhoto, PH.cur ? 2000 : 500); };
@@ -2081,6 +2334,7 @@ async function load() {
     if (r.ok) { D.data = await r.json(); try { localStorage.setItem('hbtv.data', JSON.stringify(D.data)); } catch (e) {} styleFromFeed(D.data); }
   } catch (e) {}
   applyLook(D.data); render();
+  if (typeof POL !== 'undefined' && POL) polTick();
 }
 window.hbRefresh = () => { load(); renderLane(); };
 
@@ -2213,6 +2467,7 @@ function styClean(s) {
 function styleLook(lk) {
   if (!PRESETS) return lk;   /* the first draw runs before this part of the page has loaded */
   const s = styLoad(), p = PALETTES[s.palette];
+  if (s.hbx && s.hbx.holi === 'off' && lk.th) { lk = { ...lk }; delete lk.th; }
   if (!p[1]) return lk;
   const out = { main: p[1], hi: p[2], sty: s.palette };
   if (s.wall && lk.th) out.th = lk.th;   /* a holiday on the wall still brings its characters */
@@ -2234,6 +2489,7 @@ function styApply(save) {
   D.look = '';   /* re-derive colors from the new palette */
   applyLook(D.data);
   HBLook.apply(s.hbx);
+  if (typeof POL !== 'undefined' && POL) polApply();
   cycleStart();
   if (save) {
     s.ts = Date.now();
@@ -2246,7 +2502,7 @@ let styPushT = 0;
 function styPush() {
   if (DEMO) return;
   clearTimeout(styPushT);
-  styPushT = setTimeout(() => { try { fetch('style', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...styLoad(), page: '12.0', mode: MODE }) }).catch(() => {}); } catch (e) {} }, 600);
+  styPushT = setTimeout(() => { try { fetch('style', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...styLoad(), page: '13.0', mode: MODE }) }).catch(() => {}); } catch (e) {} }, 600);
 }
 /* A newer style saved somewhere else (the phone, the other screen) arrives with tv.json. */
 function styleFromFeed(data) {
@@ -2324,7 +2580,7 @@ var FX_HTML = {
 /* The shared look's hooks into this page: which elements are the clock, the date, cards and buttons, and how its
    color parts map onto this page's colors. */
 HBLook.init({
-  sel: { clock: '#clock', date: '#date', card: '.right', btnSel: '#sty .hbx-opt.on .hbx-pvw, #sty .sty-ni.on', btnMain: '#sty .hbx-opt.sel .hbx-pvw',
+  sel: { clock: '#clock', date: '#date', card: '.right', glass: '#pstrip', btnSel: '#sty .hbx-opt.on .hbx-pvw, #sty .sty-ni.on', btnMain: '#sty .hbx-opt.sel .hbx-pvw',
     btnAll: '#sty .hbx-opt .hbx-pvw, #sty .sty-ni', headText: '.right > .lbl, #dinner .lbl, #chores .lbl', hiText: '.ev .when' },
   base: () => { const cs = getComputedStyle(document.documentElement), g = n => cs.getPropertyValue(n).trim();
     return { bg: g('--bg'), card: g('--card'), text: g('--ink'), head: g('--accent'), hi: g('--gold'), glow: g('--accent'), btn: g('--accent'), clock: g('--ink'), date: g('--accent') }; },
@@ -2357,7 +2613,7 @@ function tvSections() {
   const H = HBLook, by = id => H.SECTIONS.find(x => x.id === id), g = (key, name, opts, extra) => Object.assign({ key, name, opts }, extra || {});
   const host = {
     quick: [g('preset', 'Classic presets', PRESETS.map((p, i) => [i, p[0]]))],
-    colors: [g('palette', 'Color scheme', PALETTES.map((p, i) => [i, p[0]])), g('cycle', 'Color cycling', CYCLES.map((c, i) => [i, c[0]]))],
+    colors: [g('palette', 'Color scheme', PALETTES.map((p, i) => [i, p[0]])), g('cycle', 'Live color changing (off unless you turn it on)', CYCLES.map((c, i) => [i, c[0]]))],
     cards: [g('glow', 'Screen glow', GLOWS.map((n, i) => [i, n]))],
     motion: [g('fx', 'Screen effects (on or off)', EFFECTS.map(e => [e[0], e[1]]), { multi: true })],
     holidays: [g('wall', 'Holiday themes from the wall', [[1, 'Follow the wall'], [0, 'Keep my look']])]
@@ -2369,15 +2625,16 @@ function tvSections() {
     if (s.id === 'cards') groups.push(...host.cards);
     if (s.id === 'motion') groups.splice(2, 0, ...host.motion);
     if (s.id === 'holidays') groups.push(...host.holidays);
-    return { id: s.id, name: s.name, hint: s.hint, groups };
+    return { id: s.id, name: s.name, hint: s.hint, icon: H.ICONS[s.id] || '', groups };
   });
+  TV_SECTIONS.push({ id: 'sound', name: 'Screen & sound', hint: 'Sounds, status strip, startup, screensaver', icon: H.ICONS.sound, groups: H.SCREEN.slice() });
   const app = [g('perf', 'Performance mode (keeps the TV quick)', [[1, 'On'], [0, 'Off']])];
   if (HB_APP && typeof HB_APP.place === 'function') app.push(g('gear', 'Style & Settings buttons', GEARS));
-  const acts = [['reset', 'Reset to Home Base classic']];
+  const acts = [['reset', 'Reset to recommended']];
   if (HB_APP && typeof HB_APP.pair === 'function') acts.push(['pair', 'Change the Home Base code']);
   if (HB_APP && typeof HB_APP.update === 'function') acts.push(['update', 'Update Home Base TV']);
   app.push(g('act', 'Actions', acts));
-  TV_SECTIONS.push({ id: 'app', name: 'Screen & app', hint: 'Performance, buttons, updates', groups: app });
+  TV_SECTIONS.push({ id: 'app', name: 'App & updates', hint: 'Performance, buttons, reset, updates', icon: H.ICONS.screen, groups: app });
   return TV_SECTIONS;
 }
 /* What's chosen right now for a setting (to put the check mark on the right tile). */
@@ -2398,7 +2655,7 @@ function panelIsSel(k, v) {
 /* Each tile's little picture. Ones from the shared look come from HBLook (built once, cached). */
 function tilePreview(k, v) {
   const H = HBLook;
-  if (H.LISTS[k] || k === 'quick' || k === 'part') return H.preview(k, v);
+  if (H.LISTS[k] || k === 'quick' || k === 'part' || k === 'fun') return H.preview(k, v);
   if (k === 'palette') { const p = PALETTES[v], cols = p[1] ? p.slice(1) : ['var(--accent)', 'var(--gold)']; return `<div class="hbx-pv"><div class="pv-stripes">${cols.map(c => `<i style="background:${c}"></i>`).join('')}</div></div>`; }
   if (k === 'preset') { const p = PRESETS[v], pal = PALETTES[p[1]], cols = pal[1] ? pal.slice(1, 4) : ['var(--accent)', 'var(--gold)']; return `<div class="hbx-pv"><div class="pv-stripes">${cols.map(c => `<i style="background:${c}"></i>`).join('')}</div></div>`; }
   if (k === 'cycle') return `<div class="hbx-pv"><i class="pv-cyc" style="animation-duration:${v ? [0, 16, 8, 4, 6][v] : 0}s"></i></div>`;
@@ -2463,20 +2720,21 @@ function panelOpen() {
   if (!p) {
     p = document.createElement('div'); p.id = 'sty'; document.body.appendChild(p);
     const secs = tvSections();
-    p.innerHTML = `<div class="sty-card"><div class="sty-h"><b>Style</b><span>${MODE === 'style' ? 'Tap a tile, or use the arrow keys' : '▲▼ section · ▶ / OK in · arrows move · OK picks · Back out'} · <em class="sty-ver">Page 12.0</em></span></div>
-      <div class="sty-body"><nav class="sty-nav">${secs.map((s, i) => `<div class="sty-ni" data-s="${i}"><b>${esc(s.name)}</b><span>${esc(s.hint || '')}</span></div>`).join('')}</nav><div class="sty-pane"></div></div></div>`;
+    p.innerHTML = `<div class="sty-card"><div class="sty-h"><b>Style & settings</b><span>${MODE === 'style' ? 'Tap a tile, or use the arrow keys' : '▲▼ section · ▶ / OK in · OK picks · Back out'} · <em class="sty-ver">Page 13.0</em></span></div>
+      <div class="sty-body"><nav class="sty-nav">${secs.map((s, i) => `<div class="sty-ni" data-s="${i}">${s.icon || ''}<b>${esc(s.name)}</b><span>${esc(s.hint || '')}</span></div>`).join('')}</nav><div class="sty-pane"></div></div></div>`;
     p.addEventListener('click', e => {
       const ni = e.target.closest('.sty-ni'); if (ni) { panelShow(+ni.dataset.s); PANEL.zone = 'nav'; panelFocus(); return; }
       const t = e.target.closest('.hbx-opt'); if (t) { PANEL.zone = 'grid'; panelFocus(t); panelPick(t); }
     });
   }
-  PANEL.open = true; PANEL.zone = 'nav'; document.body.classList.add('sty-open');
+  PANEL.open = true; PANEL.zone = 'nav'; clearTimeout(PANEL.closeT); document.body.classList.remove('sty-closing'); document.body.classList.add('sty-open');
   panelShow(PANEL.s); panelFocus();
   try { HB_APP && typeof HB_APP.panel === 'function' && HB_APP.panel(true); } catch (e) {}
 }
 function panelClose() {
   if (MODE === 'style') return;   /* the style page is only the panel */
-  PANEL.open = false; document.body.classList.remove('sty-open');
+  PANEL.open = false; document.body.classList.add('sty-closing');
+  clearTimeout(PANEL.closeT); PANEL.closeT = setTimeout(() => { if (!PANEL.open) document.body.classList.remove('sty-open', 'sty-closing'); }, 250);
   if (PANEL.tilesLater) { const t = PANEL.tilesLater; PANEL.tilesLater = null; setTimeout(() => sendTileTheme(...t), 350); }
   try { HB_APP && typeof HB_APP.panel === 'function' && HB_APP.panel(false); } catch (e) {}
 }
@@ -2533,7 +2791,7 @@ function panelPick(t) {
   else if (k === 'perf') s.perf = !!v;
   else if (k === 'gear') s.gear = raw;
   else if (k === 'act') {
-    if (raw === 'reset') { const ts = s.ts, hx = HBLook.set(HBLook.norm(null), 'quick', 'classic'); STY = styDefault(); STY.ts = ts; STY.hbx = hx; }
+    if (raw === 'reset') { const ts = s.ts, hx = HBLook.set(s.hbx, 'recommended', 1); STY = styDefault(); STY.ts = ts; STY.hbx = hx; }
     else if (raw === 'pair') { try { HB_APP.pair(); } catch (e) {} return; }
     else if (raw === 'update') { if (HB_APP && typeof HB_APP.update === 'function') { PANEL.upd = 'Checking…'; panelMarks(); try { HB_APP.update(); } catch (e) {} } else { PANEL.upd = ''; updHint(); } return; }
   }
@@ -2552,7 +2810,13 @@ function updHint() {
   t.textContent = 'This TV has an older Home Base app. To get the new one: open Downloader, enter home-bridge.webb-home.workers.dev/tv and install it. After that, this button updates the app for you.';
 }
 /* The remote's buttons, passed in by the app while the panel is open. Returns true when used. */
+function snd(kind) { try { if (HB_APP && typeof HB_APP.snd === 'function') HB_APP.snd(kind); } catch (e) {} }
 window.hbKey = k => {
+  const used = hbKey0(k);
+  if (used) snd(k === 'ok' || (k === 'menu' && PANEL.open) ? 'ok' : k === 'back' || !PANEL.open ? 'back' : 'move');
+  return used;
+};
+function hbKey0(k) {
   if (!PANEL.open) { if (k === 'menu') { panelOpen(); return true; } return false; }
   if (PANEL.zone === 'nav') {
     if (k === 'up' || k === 'down') { panelShow(PANEL.s + (k === 'up' ? -1 : 1)); panelFocus(); }
@@ -2566,16 +2830,125 @@ window.hbKey = k => {
   if (k === 'ok') { if (PANEL.tile) panelPick(PANEL.tile); return true; }
   if (['up', 'down', 'left', 'right'].includes(k)) { if (!panelMove(k) && k === 'left') { PANEL.zone = 'nav'; panelFocus(); } return true; }
   return false;
-};
+}
 window.hbStyle = { open: panelOpen, close: panelClose, get: () => styLoad() };
 document.addEventListener('keydown', e => {
   const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', Enter: 'ok', Escape: 'back', Backspace: 'back', s: 'menu' };
   if (map[e.key] && window.hbKey(map[e.key])) e.preventDefault();
 });
+
+/* ---------- premium polish (page 13): the switchable touches ----------
+   Each one reads its switch from the shared look (styLoad().hbx) and does nothing when it's off. Layers are built once
+   and only rebuilt when what they show changes; everything moves with transform and opacity. Nothing here ever shows
+   an error: if something can't be read, the last good version stays on screen. */
+var POL = { wx: '', done: null, net: '', t: 0 };
+const polL = () => { try { return styLoad().hbx || {}; } catch (e) { return {}; } };
+const polStill = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+function polLayers() {
+  const mk = (id, before) => { let el = document.getElementById(id); if (!el) { el = document.createElement('div'); el.id = id; el.setAttribute('aria-hidden', 'true'); document.body.insertBefore(el, before); } return el; };
+  const wrap = $('#wrap');
+  mk('amb', $('#glow') || wrap); mk('tod', wrap); mk('wxfx', wrap);
+  const strip = mk('pstrip', null); strip.hidden = true;
+  const boot = mk('boot', null); boot.hidden = true;
+  if (!boot.firstChild) boot.innerHTML = '<div class="bm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11.2 12 4l8.5 7.2"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5.5h4V20"/></svg><b>Home Base</b></div>';
+}
+
+/* Time of day: the light's color and how dim the screen is, eased between a few points through the day. */
+const TOD = [[0, [60, 70, 150], .10, .30], [5, [80, 80, 160], .10, .26], [7, [255, 172, 104], .16, 0], [10, [255, 222, 176], .07, 0], [16, [255, 196, 128], .06, 0],
+  [18.5, [255, 128, 92], .15, .04], [20.5, [104, 80, 180], .14, .14], [22.5, [60, 70, 150], .10, .26], [24, [60, 70, 150], .10, .30]];
+function polTod() {
+  const el = $('#tod'), R = document.documentElement; if (!el) return;
+  if (polL().tod !== 'on') { R.classList.remove('tod-night'); return; }
+  const d = new Date(), h = d.getHours() + d.getMinutes() / 60;
+  let i = 0; while (i < TOD.length - 2 && TOD[i + 1][0] <= h) i++;
+  const a = TOD[i], b = TOD[i + 1], t = (h - a[0]) / (b[0] - a[0]), m = (x, y) => x + (y - x) * t;
+  const c = a[1].map((v, k) => Math.round(m(v, b[1][k])));
+  el.style.setProperty('--tod-c', `rgba(${c.join(',')},${m(a[2], b[2]).toFixed(3)})`);
+  const dim = m(a[3], b[3]); el.style.setProperty('--tod-d', dim.toFixed(3));
+  R.classList.toggle('tod-night', dim > .2);
+}
+
+/* Weather touches from the weather the wall sends: rain shimmer, slow snow, frost on cold mornings. */
+const WX_RAIN = [12, 13, 14, 18, 39, 40, 15, 16, 17, 41, 42];
+function polWx() {
+  const box = $('#wxfx'); if (!box) return;
+  const w = D.data && D.data.wx, on = polL().wx === 'on' && w && !polStill(), c = w ? Number(w.ic) || 0 : 0, hr = new Date().getHours();
+  const rain = on && WX_RAIN.includes(c), snow = on && ((c >= 19 && c <= 29) || c === 43 || c === 44);
+  const frost = on && w.now != null && +w.now <= 34 && hr >= 5 && hr < 11;
+  const key = [rain, snow, frost].join();
+  if (key === POL.wx) return; POL.wx = key;
+  let h = '';
+  const r = n => (holHash('wx' + n) % 1000) / 1000;
+  if (rain) for (let i = 0; i < 36; i++) { const du = 0.75 + r(i) * 0.5; h += `<i class="rd" style="left:${(r(i + 99) * 120).toFixed(1)}vw;animation-duration:${du.toFixed(2)}s;animation-delay:${(-r(i + 7) * du).toFixed(2)}s;opacity:${(0.4 + r(i + 3) * 0.6).toFixed(2)}"></i>`; }
+  if (snow) for (let i = 0; i < 28; i++) { const du = 14 + r(i) * 12, s = 0.5 + r(i + 5) * 0.9; h += `<i class="sf" style="left:${(r(i + 50) * 100).toFixed(1)}vw;width:${s.toFixed(2)}vh;height:${s.toFixed(2)}vh;animation-duration:${du.toFixed(1)}s;animation-delay:${(-r(i + 9) * du).toFixed(1)}s"></i>`; }
+  box.innerHTML = h;
+  box.classList.toggle('frost', !!frost);
+}
+
+/* Status strip: the time, the weather, the Wi-Fi signal (from the app) and who's home (when Home Base sends it). */
+const WIFI = n => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">${[[20, 7.2], [16.4, 10.6], [12.8, 14]].map(([w, y], i) =>
+  `<path d="M${12 - w / 2} ${y}a${w * 0.9} ${w * 0.9} 0 0 1 ${w} 0" opacity="${i < 3 - n ? .3 : 1}"/>`).join('')}<circle cx="12" cy="18" r="1.4" fill="currentColor" stroke="none"/></svg>`;
+function polNet() {
+  try { if (HB_APP && typeof HB_APP.net === 'function') return String(HB_APP.net() || ''); } catch (e) {}
+  return navigator.onLine === false ? 'none' : 'wifi:3';
+}
+function polStrip() {
+  const el = $('#pstrip'); if (!el) return;
+  if (polL().strip !== 'on' || MODE === 'style') { el.hidden = true; return; }
+  const d = D.data || {}, w = d.wx, parts = [];
+  const now = new Date(); let h = now.getHours() % 12 || 12;
+  parts.push(`<span><b>${h}:${pad(now.getMinutes())}</b></span>`);
+  if (w && w.now != null) parts.push(`<span>${wxIcon(w.ic, w.night)}<b>${esc(w.now)}°</b></span>`);
+  const net = polNet();
+  if (/^wifi/.test(net)) parts.push(`<span>${WIFI(Math.max(0, Math.min(3, +(net.split(':')[1] || 3))))}Wi-Fi</span>`);
+  else if (net === 'eth') parts.push('<span>Wired</span>');
+  else if (net === 'none') parts.push(`<span>${WIFI(0)}Offline</span>`);
+  const home = Array.isArray(d.home) ? d.home.filter(x => typeof x === 'string' && x).slice(0, 4) : null;
+  if (home) parts.push(`<span>${home.length ? `<b>${esc(home.join(', '))}</b> home` : 'Nobody home'}</span>`);
+  const html = parts.join('<i class="sep"></i>');
+  if (el.dataset.h !== html) { el.innerHTML = html; el.dataset.h = html; }
+  el.hidden = false;
+}
+
+/* Chores: when the last one is ticked off, the Fun characters celebrate. */
+function polChores() {
+  const c = D.data && Array.isArray(D.data.chores) ? D.data.chores : [];
+  const done = c.length > 0 && c.every(x => !x.left || !x.left.length);
+  if (POL.done === false && done) { try { HBLook.cheer(); } catch (e) {} }
+  POL.done = done;
+}
+
+/* Startup: the mark glows in, then the screen assembles. Played when the page first opens and when the TV wakes. */
+window.hbBoot = () => {
+  const b = $('#boot');
+  if (!b || polL().boot !== 'on' || MODE !== 'home' || polStill()) return;
+  clearTimeout(POL.bt1); clearTimeout(POL.bt2);
+  b.classList.remove('go', 'out'); b.hidden = false; void b.offsetWidth; b.classList.add('go');
+  document.body.classList.add('booting');
+  POL.bt1 = setTimeout(() => { b.classList.add('out'); document.body.classList.remove('booting'); }, 1300);
+  POL.bt2 = setTimeout(() => { b.hidden = true; b.classList.remove('go', 'out'); }, 1750);
+};
+
+/* Screensaver photos: each one gets its own gentle pan and zoom, and the speed setting sets how long each shows. */
+function polPhotoMs() { const sp = polL().kbSpeed; return sp === 'slow' ? 24000 : sp === 'fast' ? 9000 : 15000; }
+function polKb(el) {
+  const r = Math.random, dir = r() < 0.5 ? -1 : 1;
+  el.style.setProperty('--ks', (1.08 + r() * 0.06).toFixed(3));
+  el.style.setProperty('--kx', (dir * (1 + r() * 2)).toFixed(2) + '%');
+  el.style.setProperty('--ky', ((r() - 0.5) * 3).toFixed(2) + '%');
+  el.style.setProperty('--kbd', ((polPhotoMs() + 2500) / 1000).toFixed(1) + 's');
+}
+
+function polTick() { polTod(); polWx(); polStrip(); polChores(); }
+function polApply() { polLayers(); POL.wx = ''; polTick(); }
+polLayers();
+setInterval(polTick, 30000);
+(function polMin() { polStrip(); setTimeout(polMin, 60000 - Date.now() % 60000 + 80); })();
 styApply(false);
 if (MODE === 'style') { document.body.classList.add('home'); panelOpen(); }
 setInterval(() => HBLook.lock(), 60000);
 
+try { window.hbBoot(); } catch (e) {}
 requestAnimationFrame(() => { document.body.classList.add('ready'); try { HB_APP && HB_APP.ready(); } catch (e) {} });
 
 })();

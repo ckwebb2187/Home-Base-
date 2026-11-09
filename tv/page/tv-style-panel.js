@@ -12,7 +12,7 @@ function tvSections() {
   const H = HBLook, by = id => H.SECTIONS.find(x => x.id === id), g = (key, name, opts, extra) => Object.assign({ key, name, opts }, extra || {});
   const host = {
     quick: [g('preset', 'Classic presets', PRESETS.map((p, i) => [i, p[0]]))],
-    colors: [g('palette', 'Color scheme', PALETTES.map((p, i) => [i, p[0]])), g('cycle', 'Color cycling', CYCLES.map((c, i) => [i, c[0]]))],
+    colors: [g('palette', 'Color scheme', PALETTES.map((p, i) => [i, p[0]])), g('cycle', 'Live color changing (off unless you turn it on)', CYCLES.map((c, i) => [i, c[0]]))],
     cards: [g('glow', 'Screen glow', GLOWS.map((n, i) => [i, n]))],
     motion: [g('fx', 'Screen effects (on or off)', EFFECTS.map(e => [e[0], e[1]]), { multi: true })],
     holidays: [g('wall', 'Holiday themes from the wall', [[1, 'Follow the wall'], [0, 'Keep my look']])]
@@ -24,15 +24,16 @@ function tvSections() {
     if (s.id === 'cards') groups.push(...host.cards);
     if (s.id === 'motion') groups.splice(2, 0, ...host.motion);
     if (s.id === 'holidays') groups.push(...host.holidays);
-    return { id: s.id, name: s.name, hint: s.hint, groups };
+    return { id: s.id, name: s.name, hint: s.hint, icon: H.ICONS[s.id] || '', groups };
   });
+  TV_SECTIONS.push({ id: 'sound', name: 'Screen & sound', hint: 'Sounds, status strip, startup, screensaver', icon: H.ICONS.sound, groups: H.SCREEN.slice() });
   const app = [g('perf', 'Performance mode (keeps the TV quick)', [[1, 'On'], [0, 'Off']])];
   if (HB_APP && typeof HB_APP.place === 'function') app.push(g('gear', 'Style & Settings buttons', GEARS));
-  const acts = [['reset', 'Reset to Home Base classic']];
+  const acts = [['reset', 'Reset to recommended']];
   if (HB_APP && typeof HB_APP.pair === 'function') acts.push(['pair', 'Change the Home Base code']);
   if (HB_APP && typeof HB_APP.update === 'function') acts.push(['update', 'Update Home Base TV']);
   app.push(g('act', 'Actions', acts));
-  TV_SECTIONS.push({ id: 'app', name: 'Screen & app', hint: 'Performance, buttons, updates', groups: app });
+  TV_SECTIONS.push({ id: 'app', name: 'App & updates', hint: 'Performance, buttons, reset, updates', icon: H.ICONS.screen, groups: app });
   return TV_SECTIONS;
 }
 /* What's chosen right now for a setting (to put the check mark on the right tile). */
@@ -53,7 +54,7 @@ function panelIsSel(k, v) {
 /* Each tile's little picture. Ones from the shared look come from HBLook (built once, cached). */
 function tilePreview(k, v) {
   const H = HBLook;
-  if (H.LISTS[k] || k === 'quick' || k === 'part') return H.preview(k, v);
+  if (H.LISTS[k] || k === 'quick' || k === 'part' || k === 'fun') return H.preview(k, v);
   if (k === 'palette') { const p = PALETTES[v], cols = p[1] ? p.slice(1) : ['var(--accent)', 'var(--gold)']; return `<div class="hbx-pv"><div class="pv-stripes">${cols.map(c => `<i style="background:${c}"></i>`).join('')}</div></div>`; }
   if (k === 'preset') { const p = PRESETS[v], pal = PALETTES[p[1]], cols = pal[1] ? pal.slice(1, 4) : ['var(--accent)', 'var(--gold)']; return `<div class="hbx-pv"><div class="pv-stripes">${cols.map(c => `<i style="background:${c}"></i>`).join('')}</div></div>`; }
   if (k === 'cycle') return `<div class="hbx-pv"><i class="pv-cyc" style="animation-duration:${v ? [0, 16, 8, 4, 6][v] : 0}s"></i></div>`;
@@ -118,20 +119,21 @@ function panelOpen() {
   if (!p) {
     p = document.createElement('div'); p.id = 'sty'; document.body.appendChild(p);
     const secs = tvSections();
-    p.innerHTML = `<div class="sty-card"><div class="sty-h"><b>Style</b><span>${MODE === 'style' ? 'Tap a tile, or use the arrow keys' : '▲▼ section · ▶ / OK in · arrows move · OK picks · Back out'} · <em class="sty-ver">Page 12.0</em></span></div>
-      <div class="sty-body"><nav class="sty-nav">${secs.map((s, i) => `<div class="sty-ni" data-s="${i}"><b>${esc(s.name)}</b><span>${esc(s.hint || '')}</span></div>`).join('')}</nav><div class="sty-pane"></div></div></div>`;
+    p.innerHTML = `<div class="sty-card"><div class="sty-h"><b>Style & settings</b><span>${MODE === 'style' ? 'Tap a tile, or use the arrow keys' : '▲▼ section · ▶ / OK in · OK picks · Back out'} · <em class="sty-ver">Page 13.0</em></span></div>
+      <div class="sty-body"><nav class="sty-nav">${secs.map((s, i) => `<div class="sty-ni" data-s="${i}">${s.icon || ''}<b>${esc(s.name)}</b><span>${esc(s.hint || '')}</span></div>`).join('')}</nav><div class="sty-pane"></div></div></div>`;
     p.addEventListener('click', e => {
       const ni = e.target.closest('.sty-ni'); if (ni) { panelShow(+ni.dataset.s); PANEL.zone = 'nav'; panelFocus(); return; }
       const t = e.target.closest('.hbx-opt'); if (t) { PANEL.zone = 'grid'; panelFocus(t); panelPick(t); }
     });
   }
-  PANEL.open = true; PANEL.zone = 'nav'; document.body.classList.add('sty-open');
+  PANEL.open = true; PANEL.zone = 'nav'; clearTimeout(PANEL.closeT); document.body.classList.remove('sty-closing'); document.body.classList.add('sty-open');
   panelShow(PANEL.s); panelFocus();
   try { HB_APP && typeof HB_APP.panel === 'function' && HB_APP.panel(true); } catch (e) {}
 }
 function panelClose() {
   if (MODE === 'style') return;   /* the style page is only the panel */
-  PANEL.open = false; document.body.classList.remove('sty-open');
+  PANEL.open = false; document.body.classList.add('sty-closing');
+  clearTimeout(PANEL.closeT); PANEL.closeT = setTimeout(() => { if (!PANEL.open) document.body.classList.remove('sty-open', 'sty-closing'); }, 250);
   if (PANEL.tilesLater) { const t = PANEL.tilesLater; PANEL.tilesLater = null; setTimeout(() => sendTileTheme(...t), 350); }
   try { HB_APP && typeof HB_APP.panel === 'function' && HB_APP.panel(false); } catch (e) {}
 }
@@ -188,7 +190,7 @@ function panelPick(t) {
   else if (k === 'perf') s.perf = !!v;
   else if (k === 'gear') s.gear = raw;
   else if (k === 'act') {
-    if (raw === 'reset') { const ts = s.ts, hx = HBLook.set(HBLook.norm(null), 'quick', 'classic'); STY = styDefault(); STY.ts = ts; STY.hbx = hx; }
+    if (raw === 'reset') { const ts = s.ts, hx = HBLook.set(s.hbx, 'recommended', 1); STY = styDefault(); STY.ts = ts; STY.hbx = hx; }
     else if (raw === 'pair') { try { HB_APP.pair(); } catch (e) {} return; }
     else if (raw === 'update') { if (HB_APP && typeof HB_APP.update === 'function') { PANEL.upd = 'Checking…'; panelMarks(); try { HB_APP.update(); } catch (e) {} } else { PANEL.upd = ''; updHint(); } return; }
   }
@@ -207,7 +209,13 @@ function updHint() {
   t.textContent = 'This TV has an older Home Base app. To get the new one: open Downloader, enter home-bridge.webb-home.workers.dev/tv and install it. After that, this button updates the app for you.';
 }
 /* The remote's buttons, passed in by the app while the panel is open. Returns true when used. */
+function snd(kind) { try { if (HB_APP && typeof HB_APP.snd === 'function') HB_APP.snd(kind); } catch (e) {} }
 window.hbKey = k => {
+  const used = hbKey0(k);
+  if (used) snd(k === 'ok' || (k === 'menu' && PANEL.open) ? 'ok' : k === 'back' || !PANEL.open ? 'back' : 'move');
+  return used;
+};
+function hbKey0(k) {
   if (!PANEL.open) { if (k === 'menu') { panelOpen(); return true; } return false; }
   if (PANEL.zone === 'nav') {
     if (k === 'up' || k === 'down') { panelShow(PANEL.s + (k === 'up' ? -1 : 1)); panelFocus(); }
@@ -221,7 +229,7 @@ window.hbKey = k => {
   if (k === 'ok') { if (PANEL.tile) panelPick(PANEL.tile); return true; }
   if (['up', 'down', 'left', 'right'].includes(k)) { if (!panelMove(k) && k === 'left') { PANEL.zone = 'nav'; panelFocus(); } return true; }
   return false;
-};
+}
 window.hbStyle = { open: panelOpen, close: panelClose, get: () => styLoad() };
 document.addEventListener('keydown', e => {
   const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', Enter: 'ok', Escape: 'back', Backspace: 'back', s: 'menu' };

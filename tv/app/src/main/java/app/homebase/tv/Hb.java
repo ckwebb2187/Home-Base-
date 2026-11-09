@@ -30,6 +30,24 @@ final class Hb {
 
     static SharedPreferences prefs(Context c) { return c.getSharedPreferences("hb", Context.MODE_PRIVATE); }
 
+    /** The two fonts the page uses, so the app's own labels match it: Bricolage Grotesque for big things, Atkinson
+     *  Hyperlegible for everything else. Falls back to the system font if a file can't be read. */
+    private static android.graphics.Typeface fDisplay, fBody, fBodyBold;
+    static android.graphics.Typeface display(Context c) {
+        if (fDisplay == null) {
+            try { fDisplay = new android.graphics.Typeface.Builder(c.getAssets(), "fonts/BricolageGrotesque.ttf").setFontVariationSettings("'wght' 760, 'opsz' 96").build(); }
+            catch (Exception e) { fDisplay = null; }
+            if (fDisplay == null) fDisplay = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD);
+        }
+        return fDisplay;
+    }
+    static android.graphics.Typeface body(Context c, boolean bold) {
+        try {
+            if (bold) { if (fBodyBold == null) fBodyBold = android.graphics.Typeface.createFromAsset(c.getAssets(), "fonts/AtkinsonHyperlegible-Bold.ttf"); return fBodyBold; }
+            if (fBody == null) fBody = android.graphics.Typeface.createFromAsset(c.getAssets(), "fonts/AtkinsonHyperlegible-Regular.ttf"); return fBody;
+        } catch (Exception e) { return android.graphics.Typeface.create("sans-serif", bold ? android.graphics.Typeface.BOLD : android.graphics.Typeface.NORMAL); }
+    }
+
     static String code(Context c) { return prefs(c).getString("code", ""); }
 
     /** Pulls the code out of whatever was pasted: the code itself, or a whole Home Base wallpaper or TV link. */

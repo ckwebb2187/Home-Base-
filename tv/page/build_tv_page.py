@@ -6,6 +6,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 rd = lambda p: open(os.path.join(HERE, p), encoding='utf-8').read()
 page = rd('live/tv-page-11.9-D.html')
 look = rd('hb-look.js'); panel_js = rd('tv-style-panel.js'); panel_css = rd('tv-style-panel.css')
+pol_js = rd('tv-polish.js'); pol_css = rd('tv-polish.css')
 
 def once(s, old, new):
     n = s.count(old)
@@ -14,7 +15,7 @@ def once(s, old, new):
 
 # 1. CSS: the old Style panel rules make way for the new ones.
 i = page.index('#sty { display:none;'); j = page.index('\n', page.index('.sty-r button { padding:6px 12px } }', i))
-page = page[:i] + panel_css.strip() + page[j:]
+page = page[:i] + panel_css.strip() + '\n' + pol_css.strip() + page[j:]
 
 # 2. The shared look module, in its own script before the page's script.
 assert '</script' not in look
@@ -54,14 +55,24 @@ page = once(page, "function styleFromFeed(data) {\n  if (!PRESETS) return;\n  co
             "  const r = data && data.style;\n  if (!r || typeof r !== 'object' || !(+r.ts > styLoad().ts)) return;\n"
             "  const keep = styLoad().hbx;\n  STY = styClean(r);\n  if (+keep.ts > +STY.hbx.ts) STY.hbx = keep;")
 page = once(page, "  if (PANEL.open) panelDraw();\n}", "  if (PANEL.open) panelMarks();\n}")
-page = once(page, "page: '11.9-D', mode: MODE", "page: '12.0', mode: MODE")
+page = once(page, "page: '11.9-D', mode: MODE", "page: '13.0', mode: MODE")
+
+# 4b. Premium polish hooks: holiday level, screensaver pan & zoom, layers refreshed with each load, startup on open.
+page = once(page, "  const s = styLoad(), p = PALETTES[s.palette];\n  if (!p[1]) return lk;",
+            "  const s = styLoad(), p = PALETTES[s.palette];\n  if (s.hbx && s.hbx.holi === 'off' && lk.th) { lk = { ...lk }; delete lk.th; }\n  if (!p[1]) return lk;")
+page = once(page, "  if (ht) {\n    const c = { ...HOL_BASE, ...ht.c }", "  if (ht && styLoad().hbx.holi === 'full') {\n    const c = { ...HOL_BASE, ...ht.c }")
+page = once(page, "    el.className = 'ph';\n", "    el.className = 'ph'; polKb(el);\n")
+page = once(page, "    PH.timer = setTimeout(nextPhoto, PHOTO_MS);", "    PH.timer = setTimeout(nextPhoto, polPhotoMs());")
+page = once(page, "  applyLook(D.data); render();\n}\nwindow.hbRefresh", "  applyLook(D.data); render();\n  if (typeof POL !== 'undefined' && POL) polTick();\n}\nwindow.hbRefresh")
+page = once(page, "  HBLook.apply(s.hbx);\n", "  HBLook.apply(s.hbx);\n  if (typeof POL !== 'undefined' && POL) polApply();\n")
+page = once(page, "requestAnimationFrame(() => { document.body.classList.add('ready');", "try { window.hbBoot(); } catch (e) {}\nrequestAnimationFrame(() => { document.body.classList.add('ready');")
 
 # 5. The Style panel itself.
 i = page.rindex('/* ---------- the Style panel ----------'); j = page.index("styApply(false);\nif (MODE === 'style')", i)
 host = """/* The shared look's hooks into this page: which elements are the clock, the date, cards and buttons, and how its
    color parts map onto this page's colors. */
 HBLook.init({
-  sel: { clock: '#clock', date: '#date', card: '.right', btnSel: '#sty .hbx-opt.on .hbx-pvw, #sty .sty-ni.on', btnMain: '#sty .hbx-opt.sel .hbx-pvw',
+  sel: { clock: '#clock', date: '#date', card: '.right', glass: '#pstrip', btnSel: '#sty .hbx-opt.on .hbx-pvw, #sty .sty-ni.on', btnMain: '#sty .hbx-opt.sel .hbx-pvw',
     btnAll: '#sty .hbx-opt .hbx-pvw, #sty .sty-ni', headText: '.right > .lbl, #dinner .lbl, #chores .lbl', hiText: '.ev .when' },
   base: () => { const cs = getComputedStyle(document.documentElement), g = n => cs.getPropertyValue(n).trim();
     return { bg: g('--bg'), card: g('--card'), text: g('--ink'), head: g('--accent'), hi: g('--gold'), glow: g('--accent'), btn: g('--accent'), clock: g('--ink'), date: g('--accent') }; },
@@ -83,7 +94,7 @@ HBLook.init({
 """
 panel_js = panel_js.replace("  return HBLook.cur.call(null, k) !== undefined && L ? (k === 'quick' ? L.quick : L[k]) : '';",
                             "  return k === 'quick' ? L.quick : (L[k] !== undefined ? L[k] : '');")
-page = page[:i] + host + panel_js + page[j:]
+page = page[:i] + host + panel_js + '\n' + pol_js + page[j:]
 page = once(page, "if (MODE === 'style') { document.body.classList.add('home'); panelOpen(); }",
             "if (MODE === 'style') { document.body.classList.add('home'); panelOpen(); }\nsetInterval(() => HBLook.lock(), 60000);")
 
