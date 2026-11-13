@@ -34,9 +34,10 @@ panel, native tiles follow glow/press settings.
 
 ## Next: Watch features (optional section with its own on/off switch)
 Uses Claude through the Home Base wall (it already asks Claude for meal plans and recipes) and the TV app's ability
-to open other apps. All picks must be free and legal (YouTube, Tubi, Pluto TV, Freevee, Kanopy/Hoopla with a library
-card, PBS, public podcasts). Claude's knowledge of where something streams can be out of date, so every Play button
-opens the app's own search for the title rather than a guessed direct link.
+to open other apps. Picks are simply the best fit for the mood: any movie, show, video, podcast or game, not limited
+to free services. Each card shows where it streams, and Play opens it in Nuvio first (the family's main app), with
+the streaming service's own app or YouTube as the other options. Claude's knowledge of where something streams can be
+out of date, so buttons open the app's own page or search for the title rather than a guessed direct link.
 
 1. "What should I watch?" button on the TV home screen
    - Remote-friendly picker: Mood (funny, cozy, exciting, scary, learn something), Time (30 min / 1 hr / 2 hr+),
@@ -46,7 +47,7 @@ opens the app's own search for the title rather than a guessed direct link.
    - Play opens the right app to a search for it (YouTube: com.google.android.youtube.tv with a search intent; others
      by their package's search, falling back to opening the app). "More like this" and "Something else" buttons.
 2. Movie night planner
-   - Pick a mood → a short list of free movies with where to watch, why you'll like it, and backups.
+   - Pick a mood → a short list of great movies with where to watch, why you'll like it, and backups.
    - Optional: put "Movie night" on the family calendar and suggest a matching dinner in Meals.
 3. Family channel guide (YouTube as rows)
    - Rows on the TV home screen: Learning, Kids, Cooking, Chill (rows editable), filled with YouTube picks that
@@ -58,8 +59,8 @@ Keep all three in the Style/Settings groups under a new "Watch" section, off by 
 ## Next: Nuvio on the TV (the Nuvio app is already installed on the box)
 Find its package and deep links first: `adb shell pm list packages | grep -i nuvio`, and its intent filters/URL scheme
 from `adb shell dumpsys package <pkg>` (Nuvio is open source, so its manifest can be checked too). Don't guess them.
-1. Play buttons: when a Watch pick is a movie or show, offer "Open in Nuvio" (to the title's page or its search),
-   next to the free service it streams on. Fall back to just opening Nuvio when there's no deep link.
+1. Play buttons: when a Watch pick is a movie or show, "Open in Nuvio" is the main button (to the title's page or its
+   search), with the streaming service's app as a second option. Fall back to just opening Nuvio when there's no deep link.
 2. Continue watching / watchlist row (optional, off by default): Nuvio syncs with Trakt. If the family turns it on and
    signs in to Trakt once (device-code sign-in on the TV, token kept on the Home Bridge, never in the repo), show a
    "Continue watching" and "Watchlist" poster row on the home screen that opens each title in Nuvio.
@@ -67,4 +68,4 @@ from `adb shell dumpsys package <pkg>` (Nuvio is open source, so its manifest ca
    focus, title logo art, rating and runtime chips, and an optional muted trailer preview after a few seconds on a
    tile (on/off). Artwork from TMDB (free API key, stored on the Home Bridge, not in the repo), with TMDB credited.
 4. Tile in the app row: Nuvio keeps its themed tile; "hold OK" offers Open / Continue watching / Watchlist.
-Only link to legal sources. Don't add, configure or recommend stream-scraping add-ons for Nuvio.
+Home Base opens titles in Nuvio as it's already set up; it doesn't install or configure Nuvio add-ons.
