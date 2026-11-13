@@ -28,9 +28,9 @@ function xmasFx(on) {
      velvet bow in the middle: layered fir and pine with frosted tips, pine cones and a few berries, warm white lights
      woven through. Painted once onto a canvas (a still picture); only some bulbs twinkle. */
   const W = innerWidth, VH = innerHeight / 100, GH = Math.round(34 * VH), dpr = Math.min(2, devicePixelRatio || 1);
-  /* how close to a side edge (1 at the edge, 0 from ~7% in): the garland gets fuller there and falls down the sides */
-  const edge = x => Math.pow(Math.max(0, 1 - Math.min(x, 1 - x) / 0.075), 1.6);
-  const bot = x => (5.6 + 4 * Math.sin(Math.PI * ((x * 2) % 1)) + 0.7 * Math.sin(x * 41) + 0.5 * Math.sin(x * 97 + 1) + 11 * edge(x)) * VH;   // the lower edge, in px
+  /* how close to a side edge: 1 at the edge, easing off gradually to 0 about a fifth of the way in */
+  const edge = x => { const t = Math.max(0, 1 - Math.min(x, 1 - x) / 0.2); return t * t * (3 - 2 * t); };
+  const bot = x => (5.6 + 4 * Math.sin(Math.PI * ((x * 2) % 1)) + 0.7 * Math.sin(x * 41) + 0.5 * Math.sin(x * 97 + 1) + 2.5 * edge(x)) * VH;   // the lower edge, in px
   const box = mk('xlights');
   const cv = document.createElement('canvas'); cv.className = 'xgar'; cv.width = Math.round(W * dpr); cv.height = Math.round(GH * dpr);
   cv.style.width = W + 'px'; cv.style.height = GH + 'px'; box.appendChild(cv);
@@ -41,7 +41,7 @@ function xmasFx(on) {
   for (let k = 100; k >= 0; k--) g.lineTo(k / 100 * W, bot(k / 100) - 1.2 * VH);
   g.closePath(); const bg = g.createLinearGradient(0, 0, 0, 10 * VH); bg.addColorStop(0, '#061A11'); bg.addColorStop(1, '#0B2B1C'); g.fillStyle = bg; g.fill();
   /* sprays: a twig with needles down both sides; three layers from deep shade to sunlit tips */
-  const LAYERS = [['#0A2A1A', '#0E3523', '#123F29'], ['#15492F', '#1B5838', '#22643F'], ['#2A7347', '#358254', '#4A9563']];
+  const LAYERS = [['#07211A', '#0A2A1D', '#0D3222'], ['#113D27', '#15482E', '#195234'], ['#1E5C3A', '#246843', '#2E764D']];
   const tips = [];
   LAYERS.forEach((cols, L) => {
     const paths = cols.map(() => new Path2D());
@@ -64,11 +64,23 @@ function xmasFx(on) {
     paths.forEach((P, i) => { g.strokeStyle = cols[i]; g.stroke(P); });
   });
   /* frost on the tips, like it's been out in the snow */
-  g.fillStyle = 'rgba(235,245,255,.55)';
-  tips.forEach(([x, y], i) => { if (i % 3) return; g.beginPath(); g.arc(x, y, 0.32 * VH, 0, 6.283); g.fill(); });
-  /* a few holly berries */
-  g.fillStyle = '#B3192F';
-  for (let i = 0; i < 16; i++) { const x = R() * W, y = bot(x / W) - (0.8 + R() * 2.5) * VH; for (let j = 0; j < 3; j++) { g.beginPath(); g.arc(x + (j - 1) * .5 * VH, y + (j % 2) * .45 * VH, .36 * VH, 0, 6.283); g.fill(); } }
+  g.fillStyle = 'rgba(235,245,255,.45)';
+  tips.forEach(([x, y], i) => { if (i % 4) return; g.beginPath(); g.arc(x, y, 0.32 * VH, 0, 6.283); g.fill(); });
+  /* branches hanging down from the garland, a little darker; longer and more of them toward the sides */
+  const hang = [['#081F16', '#0B2A1C', '#0E3322'], ['#0F3824', '#13432B', '#164C31']];
+  for (let x = 6; x < W - 6;) {
+    const fx = x / W, e = edge(fx), y0 = bot(fx) - 1.4 * VH, len = (2.5 + R() * 3.5 + 9 * e * (0.7 + R() * 0.6)) * VH, sway = (R() - .5) * 2.4 * VH;
+    hang.forEach((cols, L) => {
+      const P = cols.map(() => new Path2D());
+      for (let n = 0; n <= 16; n++) {
+        const f = n / 16, bx = x + sway * f * f, by = y0 + f * len, nl = (1.4 - f * 0.6) * VH, pp = P[Math.floor(R() * cols.length)];
+        pp.moveTo(x + sway * Math.max(0, f - .06) ** 2, y0 + Math.max(0, f - .06) * len); pp.lineTo(bx, by);
+        for (let k = 0; k < 3; k++) { const a = Math.PI / 2 + (R() * 2 - 1) * 1.15; pp.moveTo(bx, by); pp.lineTo(bx + Math.cos(a) * nl, by + Math.sin(a) * nl * 0.85); }
+      }
+      g.lineWidth = (L ? 0.2 : 0.26) * VH; P.forEach((q, k) => { g.strokeStyle = cols[k]; g.stroke(q); });
+    });
+    x += (5 + R() * 4) * VH / (1 + 1.6 * e);
+  }
   const N = 28; let b = '';
   for (let i = 0; i < N; i++) {
     const x = (i + 0.5) / N, wob = (r(i + 300) - .5) * 2.4;
@@ -108,12 +120,12 @@ var XBOW4 = `<defs>
     <path d="M76 184 C66 196 66 214 74 226" stroke="#2A0209" stroke-width="2.2" fill="none" opacity=".55" filter="url(#xwb)"/>
     <path d="M80 180 C60 192 54 214 66 226" stroke="#D85A6E" stroke-width="1.3" fill="none" opacity=".35"/>
     <!-- upper loop -->
-    <path d="M198 124 C168 86 118 36 70 26 C50 20 32 28 30 46 C28 70 48 96 80 114 C118 136 162 142 198 138Z" fill="url(#xw)"/>
-    <path d="M188 126 C160 112 120 86 88 74 C74 70 66 76 70 86 C76 98 112 116 150 124 C166 128 180 129 188 128Z" fill="url(#xwi)" opacity=".92"/>
-    <ellipse cx="104" cy="92" rx="52" ry="26" transform="rotate(24 108 100)" fill="url(#xwp)"/>
-    <path d="M48 26 C36 42 38 70 52 92" stroke="#2A0209" stroke-width="2.4" fill="none" opacity=".55" filter="url(#xwb)"/>
-    <path d="M55 28 C44 43 46 69 59 89" stroke="#E0667A" stroke-width="1.2" fill="none" opacity=".3"/>
-    <path d="M198 124 C168 86 118 36 70 26 C50 20 32 28 30 46" stroke="#E0667A" stroke-width="1.4" fill="none" opacity=".4"/>
+    <path d="M198 122 C166 74 112 14 62 8 C36 4 18 22 20 50 C22 82 48 108 84 124 C122 140 164 144 198 140Z" fill="url(#xw)"/>
+    <path d="M186 124 C158 100 118 64 84 50 C66 44 54 54 58 70 C64 88 104 112 148 124 C166 128 178 128 186 128Z" fill="url(#xwi)" opacity=".92"/>
+    <ellipse cx="98" cy="78" rx="58" ry="34" transform="rotate(30 98 78)" fill="url(#xwp)"/>
+    <path d="M38 10 C22 30 24 66 42 96" stroke="#2A0209" stroke-width="2.4" fill="none" opacity=".55" filter="url(#xwb)"/>
+    <path d="M46 12 C32 32 34 64 50 92" stroke="#E0667A" stroke-width="1.2" fill="none" opacity=".3"/>
+    <path d="M198 122 C166 74 112 14 62 8 C36 4 18 22 20 50" stroke="#E0667A" stroke-width="1.4" fill="none" opacity=".4"/>
     <!-- gathered creases where the ribbon is pinched into the knot -->
     <path d="M184 124 C170 118 160 114 150 112 M184 134 C170 134 160 136 148 140 M184 144 C172 150 164 156 156 164" stroke="#2A0209" stroke-width="1.8" fill="none" opacity=".5" filter="url(#xwb)"/>
   </g></defs>
