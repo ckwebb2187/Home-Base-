@@ -20,16 +20,17 @@ html[data-th="evergreenglow"] #glow, html[data-th="evergreenglow"] #motes, html[
 #xbokeh .fl { position:absolute; top:-2vh; border-radius:50%; background:radial-gradient(closest-side, #fff 40%, rgba(255,255,255,0)); will-change:transform; animation:xfall linear infinite }
 @keyframes xfall { from { transform:translate3d(0,0,0) } 50% { transform:translate3d(1.5vw,52vh,0) } to { transform:translate3d(-1vw,106vh,0) } }
 /* The garland of lights along the top. */
-#xlights { bottom:auto; height:8vh }
-#xlights svg { position:absolute; left:0; top:0; width:100%; height:6vh; overflow:visible }
-#xlights path { fill:none; stroke:rgba(20,40,28,.9); stroke-width:2.2; vector-effect:non-scaling-stroke }
-#xlights .bl { position:absolute; width:.95vh; height:1.35vh; margin:-.2vh 0 0 -.47vh; border-radius:50% 50% 45% 45%; animation:xtw ease-in-out infinite alternate; will-change:opacity; transform:translateZ(0) }
+#xlights { bottom:auto; height:30vh; overflow:visible }
+#xlights .xgar { position:absolute; left:0; top:0; filter:drop-shadow(0 .6vh .8vh rgba(0,0,0,.45)) }
+#xlights .xbigbow { position:absolute; left:50%; top:-1.5vh; width:30vh; height:26vh; transform:translateX(-50%) }
+#xlights .bl { position:absolute; width:.95vh; height:1.35vh; margin:-.2vh 0 0 -.47vh; border-radius:50% 50% 45% 45% }
+#xlights .bl.tw { animation:xtw ease-in-out infinite alternate; will-change:opacity }
 #xlights .bl::before { content:''; position:absolute; left:50%; top:-.35vh; width:.5vh; height:.45vh; margin-left:-.25vh; border-radius:.1vh; background:#2A3A30 }
 #xlights .bl.r { background:#FF5A6A; box-shadow:0 0 1vh .25vh rgba(255,70,90,.75), 0 0 2.6vh .4vh rgba(200,30,50,.35) }
 #xlights .bl.g { background:#5BE08E; box-shadow:0 0 1vh .25vh rgba(70,220,130,.7), 0 0 2.6vh .4vh rgba(40,150,90,.35) }
 #xlights .bl.y { background:#FFD77A; box-shadow:0 0 1vh .25vh rgba(255,210,110,.8), 0 0 2.6vh .4vh rgba(220,170,60,.35) }
-#xlights .bl.w { background:#FFF4DC; box-shadow:0 0 1vh .25vh rgba(255,240,210,.8), 0 0 2.6vh .4vh rgba(255,220,160,.3) }
-@keyframes xtw { from { opacity:.45 } to { opacity:1 } }
+#xlights .bl.w { background:#FFF1D2; box-shadow:0 0 1vh .3vh rgba(255,226,170,.85), 0 0 3vh .5vh rgba(255,200,120,.32) }
+@keyframes xtw { 0%, 30% { opacity:1 } 100% { opacity:.3 } }
 /* Glass: the Up next card is frosted and translucent, edged in a thin line of gold, glowing garnet and pine. */
 html[data-th="evergreenglow"] .right { background:linear-gradient(160deg, rgba(20,48,34,.55), rgba(10,26,18,.42)) !important;
   border:1px solid rgba(217,180,90,.28) !important;
@@ -38,4 +39,12 @@ html[data-th="evergreenglow"] .right { background:linear-gradient(160deg, rgba(2
 /* Candlelight on the clock and date. */
 html[data-th="evergreenglow"] #clock { text-shadow:0 0 3vh rgba(244,214,140,.24), 0 0 8vh rgba(179,38,58,.16) }
 html[data-th="evergreenglow"] #date { color:#E7C982 !important; text-shadow:0 0 2.4vh rgba(231,201,130,.35) !important }
-@media (prefers-reduced-motion: reduce) { #xglow i, #xbokeh i, #xlights .bl { animation:none !important } #xbokeh .fl { display:none } }
+/* The Up next card's bow, bells and snow (placed over the card by xmasPlace). */
+#xdeco { position:fixed; left:0; top:0; z-index:3; pointer-events:none; will-change:transform }
+#xdeco .xsnow { position:absolute; left:-8px; top:calc(-5vh * .55 + 1px) }
+#xdeco .xsnow svg { display:block }
+#xdeco .xbells { position:absolute; left:-5.8vh; top:.4vh; width:10vh; height:10vh; transform-origin:58% 0; will-change:transform; animation:xswing 3.6s ease-in-out infinite alternate }
+#xdeco .xbells svg { width:100%; height:100%; overflow:visible }
+@keyframes xswing { from { transform:rotate(-7deg) } to { transform:rotate(7deg) } }
+html[data-th="evergreenglow"] body.w-open #xdeco, body.sty-open #xdeco { opacity:0 }
+@media (prefers-reduced-motion: reduce) { #xdeco .xbells, #xglow i, #xbokeh i, #xlights .bl { animation:none !important } #xbokeh .fl { display:none } }

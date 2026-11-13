@@ -56,6 +56,10 @@ public class HomeActivity extends Activity {
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private FrameLayout root;
+    /** Snow falling over everything, app tiles included (Evergreen Glow). */
+    private SnowFall snowFall;
+    /** Snow piled in the bottom corners of the screen (Evergreen Glow). */
+    private View snowDrift;
     private View fallback;
     private WebView web;
     private LinearLayout row;
@@ -96,6 +100,135 @@ public class HomeActivity extends Activity {
     private String gearPlace = "corner";
     private LinearLayout corner;
     /** Each tile's picture and sticker, so a new theme can recolor them in place instead of rebuilding the row. */
+    /** The app name under the rows glows in the theme's color; over snow it gets a dark shadow so it stays readable. */
+    private void labelShadow() {
+        if (label == null) return;
+        if (theme.snow) label.setShadowLayer(16, 0, 2, Color.argb(240, 8, 18, 12));
+        else label.setShadowLayer(18, 0, 0, Color.argb(200, Color.red(glow), Color.green(glow), Color.blue(glow)));
+    }
+    private void showSnow() {
+        labelShadow();
+        if (snowFall == null) return;
+        boolean on = theme.snow && !panelOpen;
+        if (snowDrift != null) { snowDrift.animate().cancel(); if (on) { snowDrift.setVisibility(View.VISIBLE); snowDrift.animate().alpha(1f).setDuration(400).start(); } else snowDrift.animate().alpha(0f).setDuration(200).withEndAction(() -> snowDrift.setVisibility(View.GONE)).start(); }
+        snowFall.animate().cancel();
+        if (on) { snowFall.setVisibility(View.VISIBLE); snowFall.animate().alpha(1f).setDuration(400).start(); }
+        else snowFall.animate().alpha(0f).setDuration(200).withEndAction(() -> snowFall.setVisibility(View.GONE)).start();
+    }
+    /** Drifts of snow heaped in the two bottom corners, tapering off toward the middle, with a cool shadow and a few glints. */
+    private static final class SnowDrift extends View {
+        private android.graphics.Path left, right; private int lw, lh;
+        private final android.graphics.Paint fill = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG), shade = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG), glint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private float[] gl;
+        SnowDrift(android.content.Context c) { super(c); setFocusable(false); setClickable(false); setAlpha(0f); setVisibility(GONE); shade.setColor(Color.argb(80, 20, 40, 60)); glint.setColor(Color.argb(210, 255, 255, 255)); }
+        /** One drift: tall at the screen's edge, lumpy, sloping down to nothing. side = 1 for the left corner, -1 for the right. */
+        private android.graphics.Path drift(int w, int h, int side, java.util.Random rnd, float reach, float tall) {
+            android.graphics.Path p = new android.graphics.Path();
+            float x0 = side > 0 ? 0 : w, end = w * reach, n = 7;
+            p.moveTo(x0, h); p.lineTo(x0, h - h * tall);
+            float px = 0, py = h * tall;
+            for (int i = 1; i <= n; i++) {
+                float f = i / n, x = end * f, ease = (1 - f) * (1 - f) * (0.85f + rnd.nextFloat() * 0.3f), y = h * tall * ease;
+                float mx = (px + x) / 2f, my = Math.max(py, y) + h * tall * (0.06f + rnd.nextFloat() * 0.1f);
+                p.quadTo(x0 + side * mx, h - my, x0 + side * x, h - y);
+                px = x; py = y;
+            }
+            p.lineTo(x0 + side * end, h); p.close();
+            return p;
+        }
+        @Override protected void onDraw(android.graphics.Canvas c) {
+            int w = getWidth(), h = getHeight();
+            if (w == 0 || h == 0) return;
+            if (left == null || lw != w || lh != h) {
+                lw = w; lh = h; java.util.Random rnd = new java.util.Random(11);
+                left = drift(w, h, 1, rnd, 0.3f, 0.085f); right = drift(w, h, -1, rnd, 0.34f, 0.1f);
+                fill.setShader(new android.graphics.LinearGradient(0, h * 0.88f, 0, h, Color.rgb(255, 255, 255), Color.rgb(205, 222, 240), android.graphics.Shader.TileMode.CLAMP));
+                gl = new float[20];
+                for (int i = 0; i < 20; i += 2) { boolean l = i < 10; float f = rnd.nextFloat() * (l ? 0.22f : 0.26f); gl[i] = l ? w * f : w - w * f; gl[i + 1] = h - h * (0.012f + rnd.nextFloat() * 0.03f); }
+            }
+            c.save(); c.translate(0, -h * 0.008f); c.drawPath(left, shade); c.drawPath(right, shade); c.restore();
+            c.drawPath(left, fill); c.drawPath(right, fill);
+            float gr = Math.max(1f, h * 0.0016f);
+            for (int i = 0; i < gl.length; i += 2) c.drawCircle(gl[i], gl[i + 1], gr, glint);
+        }
+    }
+    /** Light snow drifting down over the whole screen. Drawn on the screen's own frames (no timers), only while visible. */
+    private static final class SnowFall extends View {
+        private static final int N = 28;
+        private final float[] x = new float[N], y = new float[N], v = new float[N], r = new float[N], sway = new float[N], ph = new float[N], a = new float[N];
+        private final android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private long last;
+        private final java.util.Random rnd = new java.util.Random(7);
+        SnowFall(android.content.Context c) { super(c); setFocusable(false); setClickable(false); setAlpha(0f); setVisibility(GONE); p.setColor(Color.WHITE); }
+        private void seed(int i, boolean top) {
+            int w = Math.max(1, getWidth()), h = Math.max(1, getHeight());
+            x[i] = rnd.nextFloat() * w; y[i] = top ? -rnd.nextFloat() * h * 0.1f : rnd.nextFloat() * h;
+            r[i] = h * (0.0014f + rnd.nextFloat() * 0.0022f); v[i] = h * (0.025f + rnd.nextFloat() * 0.04f) * (0.6f + r[i] / (h * 0.0044f) * 0.6f);
+            sway[i] = w * (0.004f + rnd.nextFloat() * 0.01f); ph[i] = rnd.nextFloat() * 6.28f; a[i] = 0.5f + rnd.nextFloat() * 0.4f;
+        }
+        @Override protected void onSizeChanged(int w, int h, int ow, int oh) { for (int i = 0; i < N; i++) seed(i, false); last = 0; }
+        @Override protected void onDraw(android.graphics.Canvas c) {
+            long now = android.os.SystemClock.uptimeMillis();
+            float dt = last == 0 ? 0 : Math.min(0.1f, (now - last) / 1000f); last = now;
+            int h = getHeight();
+            for (int i = 0; i < N; i++) {
+                y[i] += v[i] * dt; ph[i] += dt * 0.9f;
+                if (y[i] > h + r[i] * 4) seed(i, true);
+                float px = x[i] + (float) Math.sin(ph[i]) * sway[i];
+                p.setAlpha(Math.round(a[i] * 255)); c.drawCircle(px, y[i], r[i], p);
+            }
+            if (getVisibility() == VISIBLE) postInvalidateOnAnimation();
+        }
+        @Override public void onVisibilityAggregated(boolean vis) { super.onVisibilityAggregated(vis); last = 0; if (vis) postInvalidateOnAnimation(); }
+    }
+    /** A soft cap of snow along the top of a tile: lumpy, with a couple of drips, a cool shadow under it and a few glints. */
+    private static final class SnowCap extends android.graphics.drawable.Drawable {
+        private final int seed;
+        private final android.graphics.Paint fill = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG),
+            shade = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG), glint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private android.graphics.Path path; private float[] glints; private int lw, lh;
+        SnowCap(int seed) { this.seed = seed; shade.setColor(Color.argb(70, 30, 50, 70)); glint.setColor(Color.argb(200, 255, 255, 255)); }
+        private void build(int w, int h) {
+            lw = w; lh = h;
+            java.util.Random rnd = new java.util.Random(seed);
+            float d = h * 0.18f;
+            path = new android.graphics.Path();
+            path.moveTo(0, 0); path.lineTo(w, 0);
+            int n = 5 + rnd.nextInt(3);
+            float px = w, py = d * (0.7f + rnd.nextFloat() * 0.4f);
+            path.lineTo(w, py);
+            for (int i = 1; i <= n; i++) {
+                float x = w - w * i / (float) n, y = d * (0.65f + rnd.nextFloat() * 0.5f);
+                float mx = (px + x) / 2f, my = Math.max(py, y) + d * (0.15f + rnd.nextFloat() * 0.3f);
+                path.quadTo(mx, my, x, y);
+                px = x; py = y;
+            }
+            path.lineTo(0, 0); path.close();
+            // Drips: little rounded tongues of snow hanging below the edge.
+            int drips = 1 + rnd.nextInt(3);
+            for (int i = 0; i < drips; i++) {
+                float x = w * (0.15f + rnd.nextFloat() * 0.7f), dw = w * (0.02f + rnd.nextFloat() * 0.015f), dl = d * (0.2f + rnd.nextFloat() * 0.3f);
+                path.addRoundRect(x - dw, d * 0.6f, x + dw, d * 0.75f + dl, dw, dw, android.graphics.Path.Direction.CW);
+            }
+            fill.setShader(new android.graphics.LinearGradient(0, 0, 0, d * 1.3f, Color.rgb(255, 255, 255), Color.rgb(222, 234, 246), android.graphics.Shader.TileMode.CLAMP));
+            glints = new float[12];
+            for (int i = 0; i < 12; i += 2) { glints[i] = w * (0.05f + rnd.nextFloat() * 0.9f); glints[i + 1] = d * (0.15f + rnd.nextFloat() * 0.4f); }
+        }
+        @Override public void draw(android.graphics.Canvas c) {
+            android.graphics.Rect b = getBounds();
+            if (b.width() <= 0 || b.height() <= 0) return;
+            if (path == null || lw != b.width() || lh != b.height()) build(b.width(), b.height());
+            c.save(); c.translate(b.left, b.top);
+            c.save(); c.translate(0, lh * 0.018f); c.drawPath(path, shade); c.restore();
+            c.drawPath(path, fill);
+            float gr = Math.max(1f, lh * 0.008f);
+            for (int i = 0; i < glints.length; i += 2) c.drawCircle(glints[i], glints[i + 1], gr, glint);
+            c.restore();
+        }
+        @Override public void setAlpha(int a) { fill.setAlpha(a); }
+        @Override public void setColorFilter(android.graphics.ColorFilter f) { fill.setColorFilter(f); }
+        @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
+    }
     private static final class TileRef { final Tile t; final ImageView img, sticker; TileRef(Tile t, ImageView img, ImageView sticker) { this.t = t; this.img = img; this.sticker = sticker; } }
     private final List<TileRef> refs = new ArrayList<>();
     private int themeGen;
@@ -189,7 +322,9 @@ public class HomeActivity extends Activity {
         int main = Color.rgb(29, 91, 74), accent = Color.rgb(109, 194, 164), gold = Color.rgb(240, 180, 60);
         /** A second tile color, used on every other tile (Evergreen Glow: garnet and pine); 0 when there's only one. */
         int alt = 0;
-        TileTheme altOf() { if (alt == 0) return this; TileTheme t = new TileTheme(); t.main = alt; t.accent = accent; t.gold = gold; t.json = json; return t; }
+        /** Snow piled along the top of every tile (Evergreen Glow). */
+        boolean snow;
+        TileTheme altOf() { if (alt == 0) return this; TileTheme t = new TileTheme(); t.main = alt; t.accent = accent; t.gold = gold; t.json = json; t.snow = snow; return t; }
         final List<android.graphics.Bitmap> stickers = new ArrayList<>();
         String json = "";
         static TileTheme parse(String json) {
@@ -198,6 +333,7 @@ public class HomeActivity extends Activity {
                 org.json.JSONObject o = new org.json.JSONObject(json);
                 t.main = Color.parseColor(o.getString("main")); t.accent = Color.parseColor(o.getString("accent")); t.gold = Color.parseColor(o.getString("gold"));
                 if (o.has("alt")) t.alt = Color.parseColor(o.getString("alt"));
+                t.snow = o.optBoolean("snow", false);
                 org.json.JSONArray a = o.optJSONArray("stickers");
                 for (int i = 0; a != null && i < a.length(); i++) {
                     byte[] b = android.util.Base64.decode(a.getString(i), android.util.Base64.DEFAULT);
@@ -245,15 +381,16 @@ public class HomeActivity extends Activity {
         web.setFocusableInTouchMode(false);
         web.addJavascriptInterface(new Object() {
             @JavascriptInterface public void look(String accent, String gold) {
-                try { final int a = Color.parseColor(accent), g = Color.parseColor(gold); ui.post(() -> { glow = a; glow2 = g; for (Runnable r : restyle) r.run(); label.setShadowLayer(18, 0, 0, Color.argb(200, Color.red(a), Color.green(a), Color.blue(a))); }); } catch (Exception e) { /* keep the last colors */ }
+                try { final int a = Color.parseColor(accent), g = Color.parseColor(gold); ui.post(() -> { glow = a; glow2 = g; for (Runnable r : restyle) r.run(); labelShadow(); }); } catch (Exception e) { /* keep the last colors */ }
             }
             @JavascriptInterface public void theme(final String json) {
                 if (json == null || json.length() > 2000000) return;
                 final TileTheme t = TileTheme.parse(json);   // decoded here, off the screen's thread
                 ui.post(() -> {
                     if (t.json.isEmpty() || t.json.equals(theme.json)) return;
-                    boolean stickersChanged = t.stickers.isEmpty() != theme.stickers.isEmpty();
+                    boolean stickersChanged = t.stickers.isEmpty() != theme.stickers.isEmpty() || t.snow != theme.snow;
                     theme = t; Hb.prefs(HomeActivity.this).edit().putString("tileTheme", t.json).apply();
+                    showSnow();
                     if (stickersChanged) buildRow(); else recolorTiles();
                 });
             }
@@ -280,6 +417,8 @@ public class HomeActivity extends Activity {
             @JavascriptInterface public void ready() { ui.post(() -> sendRowTop()); ui.post(() -> fallback.animate().alpha(0f).setDuration(400).withEndAction(() -> fallback.setVisibility(View.GONE)).start()); }
         }, "HomeBaseTVApp");
         root.addView(web, new FrameLayout.LayoutParams(-1, -1));
+        snowDrift = new SnowDrift(this);   // above the page, behind the rows and their label
+        root.addView(snowDrift, new FrameLayout.LayoutParams(-1, -1));
 
         // The app row and the name of the focused app under it.
         scroller = new HorizontalScrollView(this);
@@ -348,6 +487,9 @@ public class HomeActivity extends Activity {
         kp.rightMargin = pad; kp.topMargin = Math.round(H * 0.025f);
         corner.setVisibility("corner".equals(gearPlace) ? View.VISIBLE : View.GONE);
         root.addView(corner, kp);
+        snowFall = new SnowFall(this);
+        root.addView(snowFall, new FrameLayout.LayoutParams(-1, -1));
+        showSnow();
         placeRows();
 
         setContentView(root);
@@ -472,6 +614,7 @@ public class HomeActivity extends Activity {
     private void setPanel(boolean open) {
         if (open == panelOpen) return;
         panelOpen = open;
+        showSnow();
         final boolean slide = slidePanel;
         final float up = -scrH * 0.45f;
         final View[] parts = { scroller, label, corner, liveScroller, liveHead };
@@ -734,6 +877,13 @@ public class HomeActivity extends Activity {
             stp.topMargin = Math.round(tileH * 0.03f); stp.rightMargin = Math.round(tileH * 0.03f);
             v.addView(st, stp);
             stickerView = st;
+        }
+        if (theme.snow) {
+            // Snow piled along the top edge, following the tile's rounded corners (it's inside the tile's outline).
+            ImageView sn = new ImageView(this);
+            sn.setImageDrawable(new SnowCap(t.key.hashCode()));
+            sn.setScaleType(ImageView.ScaleType.FIT_XY);
+            v.addView(sn, new FrameLayout.LayoutParams(-1, -1));
         }
         refs.add(new TileRef(t, img, stickerView));
         // Focus glow drawn on top: a bright ring in the theme's color with a soft wash inside it, plus a colored

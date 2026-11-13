@@ -56,7 +56,7 @@ page = once(page, "function styleFromFeed(data) {\n  if (!PRESETS) return;\n  co
             "  const r = data && data.style;\n  if (!r || typeof r !== 'object' || !(+r.ts > styLoad().ts)) return;\n"
             "  const keep = styLoad().hbx;\n  STY = styClean(r);\n  if (+keep.ts > +STY.hbx.ts) STY.hbx = keep;")
 page = once(page, "  if (PANEL.open) panelDraw();\n}", "  if (PANEL.open) panelMarks();\n}")
-page = once(page, "page: '11.9-D', mode: MODE", "page: '13.6', mode: MODE")
+page = once(page, "page: '11.9-D', mode: MODE", "page: '13.7', mode: MODE")
 
 # 4b. Premium polish hooks: holiday level, screensaver pan & zoom, layers refreshed with each load, startup on open.
 page = once(page, "  const s = styLoad(), p = PALETTES[s.palette];\n  if (!p[1]) return lk;",
@@ -82,8 +82,8 @@ page = once(page, "  const ht = lk.th ? holThemeById(lk.th) : null; D.ht = ht;",
             "  document.documentElement.dataset.th = ht ? ht.id : '';\n  try { if (typeof xmasFx === 'function') xmasFx(!!ht && ht.id === 'evergreenglow'); } catch (e) {}")
 
 page = once(page, "HB_APP.theme(JSON.stringify({ look: key, main, accent: tk['--accent'], gold: tk['--gold'], stickers }));",
-            "HB_APP.theme(JSON.stringify({ look: key, main, accent: tk['--accent'], gold: tk['--gold'], stickers, ...(ht && ht.alt ? { alt: ht.alt } : {}) }));")
-page = once(page, "c: { r: '#B3263A', g: '#2F8A57', y: '#D9B45A'", "alt: '#1F6B45', c: { r: '#B3263A', g: '#2F8A57', y: '#D9B45A'")
+            "HB_APP.theme(JSON.stringify({ look: key, main, accent: tk['--accent'], gold: tk['--gold'], stickers, ...(ht && ht.alt ? { alt: ht.alt } : {}), ...(ht && ht.snow ? { snow: true } : {}) }));")
+page = once(page, "c: { r: '#B3263A', g: '#2F8A57', y: '#D9B45A'", "alt: '#1F6B45', snow: true, c: { r: '#B3263A', g: '#2F8A57', y: '#D9B45A'")
 
 # 5. The Style panel itself.
 i = page.rindex('/* ---------- the Style panel ----------'); j = page.index("styApply(false);\nif (MODE === 'style')", i)
