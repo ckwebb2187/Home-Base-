@@ -54,3 +54,17 @@ opens the app's own search for the title rather than a guessed direct link.
    - On/off switch, and which rows show.
 
 Keep all three in the Style/Settings groups under a new "Watch" section, off by default until switched on.
+
+## Next: Nuvio on the TV (the Nuvio app is already installed on the box)
+Find its package and deep links first: `adb shell pm list packages | grep -i nuvio`, and its intent filters/URL scheme
+from `adb shell dumpsys package <pkg>` (Nuvio is open source, so its manifest can be checked too). Don't guess them.
+1. Play buttons: when a Watch pick is a movie or show, offer "Open in Nuvio" (to the title's page or its search),
+   next to the free service it streams on. Fall back to just opening Nuvio when there's no deep link.
+2. Continue watching / watchlist row (optional, off by default): Nuvio syncs with Trakt. If the family turns it on and
+   signs in to Trakt once (device-code sign-in on the TV, token kept on the Home Bridge, never in the repo), show a
+   "Continue watching" and "Watchlist" poster row on the home screen that opens each title in Nuvio.
+3. Nuvio-style look for the Watch section: big backdrop "hero" for the top pick, poster rows with a soft zoom on
+   focus, title logo art, rating and runtime chips, and an optional muted trailer preview after a few seconds on a
+   tile (on/off). Artwork from TMDB (free API key, stored on the Home Bridge, not in the repo), with TMDB credited.
+4. Tile in the app row: Nuvio keeps its themed tile; "hold OK" offers Open / Continue watching / Watchlist.
+Only link to legal sources. Don't add, configure or recommend stream-scraping add-ons for Nuvio.
