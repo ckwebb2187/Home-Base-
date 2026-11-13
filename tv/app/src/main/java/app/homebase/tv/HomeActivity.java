@@ -124,6 +124,58 @@ public class HomeActivity extends Activity {
     private float fxK() { return "subtle".equals(fxStr) ? 0.6f : "strong".equals(fxStr) ? 1.6f : 1f; }
     private float focusScale() { return "subtle".equals(fxStr) ? 1.08f : "strong".equals(fxStr) ? 1.16f : 1.12f; }
     private int glowC() { return fxGlow != 0 ? fxGlow : glow; }
+    /** Feel & extras settings the app draws (sent by the page through prefs()): tile tilt & shine, sounds, Watch button. */
+    private boolean tiltOn = true, watchOn = true;
+    private String soundMode = "off";
+    private View watchPill;
+    private int lastDx;   // which way the last left/right press went, so a tile tilts in from that side
+    private void navSound(boolean select) {
+        if ("off".equals(soundMode)) return;
+        try {
+            android.media.AudioManager am = (android.media.AudioManager) getSystemService(AUDIO_SERVICE);
+            float vol = "soft".equals(soundMode) ? 0.25f : 0.7f;
+            int fx = select ? android.media.AudioManager.FX_KEY_CLICK : lastDx < 0 ? android.media.AudioManager.FX_FOCUS_NAVIGATION_LEFT : lastDx > 0 ? android.media.AudioManager.FX_FOCUS_NAVIGATION_RIGHT : android.media.AudioManager.FX_FOCUS_NAVIGATION_UP;
+            am.playSoundEffect(fx, vol);
+        } catch (Exception e) { /* no sound is fine */ }
+    }
+    private void readPrefs(String json) {
+        try {
+            org.json.JSONObject o = new org.json.JSONObject(json == null || json.isEmpty() ? "{}" : json);
+            tiltOn = o.optBoolean("tilt", true); watchOn = o.optBoolean("watch", true);
+            String sm = o.optString("sound", "off"); soundMode = "soft".equals(sm) || "normal".equals(sm) ? sm : "off";
+        } catch (Exception e) { /* keep the defaults */ }
+    }
+    /** Opens a link in another app: Nuvio for a movie or show, YouTube for a trailer or a search. "" when it opened. */
+    private String openLink(String uri, String pkg) {
+        if (uri == null || uri.isEmpty()) return "Nothing to open.";
+        PackageManager pm = getPackageManager();
+        String target = null, appName = "that app";
+        if ("nuvio".equals(pkg)) {
+            appName = "Nuvio";
+            if (pm.getLaunchIntentForPackage("com.nuvio.tv") != null) target = "com.nuvio.tv";
+            else {
+                Intent li = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER);
+                for (ResolveInfo ri : pm.queryIntentActivities(li, 0)) {
+                    CharSequence l = ri.loadLabel(pm);
+                    if (l != null && l.toString().toLowerCase(Locale.US).contains("nuvio")) { target = ri.activityInfo.packageName; break; }
+                }
+            }
+        } else if ("youtube".equals(pkg)) {
+            appName = "YouTube";
+            if (pm.getLaunchIntentForPackage("com.google.android.youtube.tv") != null) target = "com.google.android.youtube.tv";
+            else if (pm.getLaunchIntentForPackage("com.google.android.youtube") != null) target = "com.google.android.youtube";
+        }
+        Intent v = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(uri)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (target != null) {
+            try { startActivity(new Intent(v).setPackage(target)); return ""; } catch (Exception e) { /* try without the package */ }
+        }
+        try { startActivity(v); return ""; } catch (Exception e) { /* nothing takes this link */ }
+        if (target != null) {
+            Intent l = pm.getLaunchIntentForPackage(target);
+            if (l != null) { try { startActivity(l.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return "Opened " + appName + " — search for it there."; } catch (Exception e) { /* fall through */ } }
+        }
+        return appName + " isn't installed on this TV.";
+    }
 
     /** One tile: an app, the Home Base wall, or Settings. */
     private static final class Tile {
@@ -208,6 +260,17 @@ public class HomeActivity extends Activity {
             @JavascriptInterface public void fx(final String json) { ui.post(() -> setFx(json)); }
             @JavascriptInterface public void snd(final String kind) { ui.post(() -> sound(kind)); }
             @JavascriptInterface public String net() { return netState(); }
+            @JavascriptInterface public String open(String uri, String pkg) { String r = openLink(uri, pkg); return r; }
+            @JavascriptInterface public void prefs(final String json) {
+                if (json == null || json.length() > 2000) return;
+                ui.post(() -> {
+                    boolean oldTilt = tiltOn, oldWatch = watchOn; String oldSound = soundMode;
+                    readPrefs(json);
+                    if (oldTilt == tiltOn && oldWatch == watchOn && oldSound.equals(soundMode)) return;
+                    Hb.prefs(HomeActivity.this).edit().putString("feel", json).apply();
+                    if (watchPill != null) watchPill.setVisibility(watchOn ? View.VISIBLE : View.GONE);
+                });
+            }
             @JavascriptInterface public void ready() { ui.post(() -> sendRowTop()); ui.post(() -> fallback.animate().alpha(0f).setDuration(400).withEndAction(() -> fallback.setVisibility(View.GONE)).start()); }
         }, "HomeBaseTVApp");
         root.addView(web, new FrameLayout.LayoutParams(-1, -1));
@@ -267,10 +330,14 @@ public class HomeActivity extends Activity {
         // The small Style and Settings buttons, bottom right (or in the app row; Style → Settings button).
         gearPlace = Hb.prefs(this).getString("gear", "corner");
         parseFx(Hb.prefs(this).getString("tileFx", ""));
+        readPrefs(Hb.prefs(this).getString("feel", ""));
         corner = new LinearLayout(this);
         corner.setOrientation(LinearLayout.HORIZONTAL);
         corner.setClipChildren(false);
         corner.setClipToPadding(false);
+        watchPill = pill("\uD83C\uDF7F Watch", () -> web.evaluateJavascript("window.hbWatch && hbWatch.open()", null));   // 🍿 What should I watch?
+        watchPill.setVisibility(watchOn ? View.VISIBLE : View.GONE);
+        corner.addView(watchPill, pillParams());
         corner.addView(pill("\uD83C\uDFA8", () -> openStyle()), pillParams());   // 🎨 Style
         corner.addView(pill("\u2699", () -> openSettings()), pillParams());   // ⚙ Settings
         FrameLayout.LayoutParams kp = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.END);
@@ -324,6 +391,8 @@ public class HomeActivity extends Activity {
         resetIdle();
         int code = e.getKeyCode();
         boolean down = e.getAction() == KeyEvent.ACTION_DOWN;
+        if (down) lastDx = code == KeyEvent.KEYCODE_DPAD_RIGHT ? 1 : code == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : code == KeyEvent.KEYCODE_DPAD_UP || code == KeyEvent.KEYCODE_DPAD_DOWN ? 0 : lastDx;
+        if (down && !panelOpen && e.getRepeatCount() == 0 && (code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER)) navSound(true);
         // While Style is open, the remote drives it.
         if (panelOpen) {
             String k = keyName(code);
@@ -391,7 +460,7 @@ public class HomeActivity extends Activity {
         t.setText(text);
         final boolean icon = text.codePointCount(0, text.length()) == 1;
         final boolean gear = "\u2699".equals(text);
-        t.setContentDescription(gear ? "Settings" : icon ? "Style" : text);
+        t.setContentDescription(gear ? "Settings" : icon ? "Style" : "What should I watch?");
         final PaletteIcon pal = icon && !gear ? new PaletteIcon() : null;
         final GearIcon gi = gear ? new GearIcon() : null;
         final android.graphics.drawable.Drawable ic = pal != null ? pal : gi;
@@ -426,7 +495,7 @@ public class HomeActivity extends Activity {
             style.run();
             v.animate().scaleX(has ? focusScale() : 1f).scaleY(has ? focusScale() : 1f).setDuration(250).setInterpolator(EASE).start();
             if (has && keyNav) { keyNav = false; sound("move"); }
-            if (has) label.setText(gear ? "Settings  ·  hold OK to change the Home Base code" : "Style  ·  colors, glows and effects");
+            if (has) label.setText(gear ? "Settings  ·  hold OK to change the Home Base code" : icon ? "Style  ·  colors, glows and effects" : "What should I watch?  ·  picks for your mood");
         });
         t.setOnClickListener(v -> pressThen(v, null, open));
         t.setOnLongClickListener(v -> { if (gear) { startActivity(new Intent(this, PairActivity.class)); return true; } return false; });

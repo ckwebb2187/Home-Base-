@@ -7,6 +7,7 @@ rd = lambda p: open(os.path.join(HERE, p), encoding='utf-8').read()
 page = rd('live/tv-page-11.9-D.html')
 look = rd('hb-look.js'); panel_js = rd('tv-style-panel.js'); panel_css = rd('tv-style-panel.css')
 pol_js = rd('tv-polish.js'); pol_css = rd('tv-polish.css')
+watch_js = rd('tv-watch.js'); watch_css = rd('tv-watch.css')
 
 def once(s, old, new):
     n = s.count(old)
@@ -15,7 +16,7 @@ def once(s, old, new):
 
 # 1. CSS: the old Style panel rules make way for the new ones.
 i = page.index('#sty { display:none;'); j = page.index('\n', page.index('.sty-r button { padding:6px 12px } }', i))
-page = page[:i] + panel_css.strip() + '\n' + pol_css.strip() + page[j:]
+page = page[:i] + panel_css.strip() + '\n' + pol_css.strip() + '\n' + watch_css.strip() + page[j:]
 
 # 2. The shared look module, in its own script before the page's script.
 assert '</script' not in look
@@ -55,7 +56,7 @@ page = once(page, "function styleFromFeed(data) {\n  if (!PRESETS) return;\n  co
             "  const r = data && data.style;\n  if (!r || typeof r !== 'object' || !(+r.ts > styLoad().ts)) return;\n"
             "  const keep = styLoad().hbx;\n  STY = styClean(r);\n  if (+keep.ts > +STY.hbx.ts) STY.hbx = keep;")
 page = once(page, "  if (PANEL.open) panelDraw();\n}", "  if (PANEL.open) panelMarks();\n}")
-page = once(page, "page: '11.9-D', mode: MODE", "page: '13.1', mode: MODE")
+page = once(page, "page: '11.9-D', mode: MODE", "page: '13.2', mode: MODE")
 
 # 4b. Premium polish hooks: holiday level, screensaver pan & zoom, layers refreshed with each load, startup on open.
 page = once(page, "  const s = styLoad(), p = PALETTES[s.palette];\n  if (!p[1]) return lk;",
@@ -94,7 +95,11 @@ HBLook.init({
 """
 panel_js = panel_js.replace("  return HBLook.cur.call(null, k) !== undefined && L ? (k === 'quick' ? L.quick : L[k]) : '';",
                             "  return k === 'quick' ? L.quick : (L[k] !== undefined ? L[k] : '');")
-page = page[:i] + host + panel_js + '\n' + pol_js + page[j:]
+keys = """
+/* Watch takes the remote's buttons while it's open; Style gets them otherwise. */
+(function () { const styleKey = window.hbKey; window.hbKey = k => WATCH.open ? watchKey(k) : styleKey(k); })();
+"""
+page = page[:i] + host + panel_js + '\n' + pol_js + '\n' + watch_js + keys + page[j:]
 page = once(page, "if (MODE === 'style') { document.body.classList.add('home'); panelOpen(); }",
             "if (MODE === 'style') { document.body.classList.add('home'); panelOpen(); }\nsetInterval(() => HBLook.lock(), 60000);")
 
