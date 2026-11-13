@@ -187,6 +187,9 @@ public class HomeActivity extends Activity {
     /** The app row's look, sent by the page whenever Home Base's theme changes: its colors and a few of its stickers. */
     private static final class TileTheme {
         int main = Color.rgb(29, 91, 74), accent = Color.rgb(109, 194, 164), gold = Color.rgb(240, 180, 60);
+        /** A second tile color, used on every other tile (Evergreen Glow: garnet and pine); 0 when there's only one. */
+        int alt = 0;
+        TileTheme altOf() { if (alt == 0) return this; TileTheme t = new TileTheme(); t.main = alt; t.accent = accent; t.gold = gold; t.json = json; return t; }
         final List<android.graphics.Bitmap> stickers = new ArrayList<>();
         String json = "";
         static TileTheme parse(String json) {
@@ -194,6 +197,7 @@ public class HomeActivity extends Activity {
             try {
                 org.json.JSONObject o = new org.json.JSONObject(json);
                 t.main = Color.parseColor(o.getString("main")); t.accent = Color.parseColor(o.getString("accent")); t.gold = Color.parseColor(o.getString("gold"));
+                if (o.has("alt")) t.alt = Color.parseColor(o.getString("alt"));
                 org.json.JSONArray a = o.optJSONArray("stickers");
                 for (int i = 0; a != null && i < a.length(); i++) {
                     byte[] b = android.util.Base64.decode(a.getString(i), android.util.Base64.DEFAULT);
@@ -541,7 +545,8 @@ public class HomeActivity extends Activity {
         final List<TileRef> list = new ArrayList<>(refs);
         new Thread(() -> {
             final List<android.graphics.Bitmap> out = new ArrayList<>();
-            for (TileRef r : list) out.add(themedArt(r.t, th));
+            final TileTheme alt = th.altOf();
+            for (int i = 0; i < list.size(); i++) out.add(themedArt(list.get(i).t, i % 2 == 1 ? alt : th));
             ui.post(() -> {
                 if (gen != themeGen) return;
                 for (int i = 0; i < list.size(); i++) {
@@ -715,7 +720,7 @@ public class HomeActivity extends Activity {
         });
         ImageView img = new ImageView(this);
         img.setScaleType(ImageView.ScaleType.FIT_XY);
-        img.setImageBitmap(themedArt(t, theme));
+        img.setImageBitmap(themedArt(t, refs.size() % 2 == 1 ? theme.altOf() : theme));
         v.addView(img, new FrameLayout.LayoutParams(-1, -1));
         ImageView stickerView = null;
         if (!theme.stickers.isEmpty()) {

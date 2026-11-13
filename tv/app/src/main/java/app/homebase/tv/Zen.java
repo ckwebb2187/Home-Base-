@@ -38,6 +38,7 @@ final class Zen {
         STATIONS.put("night", new String[]{ "Deep Haze", "Frozen Star", "Lightless Dawn" });
         STATIONS.put("hope", new String[]{ "Eternal Hope", "Lasting Hope", "Ascending the Vale", "Morning" });
         STATIONS.put("lounge", new String[]{ "Bossa Antigua", "Lobby Time", "Jazz Brunch", "Cool Vibes", "Airport Lounge" });
+        STATIONS.put("xmas", new String[]{ "Silent Night", "Jingle Bells Calm", "Winter Reflections", "Angels We Have Heard", "Greensleeves", "Frost Waltz", "We Wish You", "Dance of the Sugar Plum Fairy", "Winter Chimes" });
         STATIONS.put("acoustic", new String[]{ "Laid Back Guitars", "Wholesome", "Easy Lemon", "Ambler", "Wallpaper" });
     }
     /** How loud, on top of the TV's own volume: kept low so it sits in the background. */
@@ -81,7 +82,7 @@ final class Zen {
 
     // ---------- tracks ----------
     private List<String> titles() {
-        if ("mix".equals(mode)) { List<String> all = new ArrayList<>(); for (String[] a : STATIONS.values()) all.addAll(Arrays.asList(a)); Collections.sort(all); return all; }
+        if ("mix".equals(mode)) { List<String> all = new ArrayList<>(); for (Map.Entry<String, String[]> e : STATIONS.entrySet()) if (!"xmas".equals(e.getKey())) all.addAll(Arrays.asList(e.getValue()));   /* Christmas songs stay out of the year-round shuffle */ Collections.sort(all); return all; }
         String[] a = STATIONS.get(mode); return a == null ? new ArrayList<>() : Arrays.asList(a);
     }
     private File file(String title) { return new File(new File(c.getFilesDir(), "music"), title.replaceAll("[^A-Za-z0-9]", "_") + ".mp3"); }

@@ -74,16 +74,17 @@ window.HBLook = window.HBLook || (() => {
   /* The feel settings: each effect has its own switch (they don't change the quick look). Calm by default. */
   const ON = [['on', 'On'], ['off', 'Off']];
   const HOLI = [['subtle', 'Subtle'], ['full', 'Full'], ['off', 'Off']];
+  const XMAS = [['wall', 'Follow the wall'], ['season', 'Each Christmas'], ['glow', 'On now']];
   const VOL = [['low', 'Quiet'], ['mid', 'Medium'], ['high', 'Loud']];
   const SPEED = [['slow', 'Slow'], ['normal', 'Normal'], ['fast', 'Fast']];
   const FUN = [['calm', 'Calm'], ['playful', 'Playful'], ['party', 'Party']];
   const ART = [['theme', 'In my colors'], ['real', 'Original app art']];
   const MUSIC = [['zen', 'Zen meditation'], ['piano', 'Soft piano'], ['dreamy', 'Dreamy ambient'], ['calm', 'Calm & peaceful'], ['night', 'Night & starlight'],
-    ['hope', 'Bright & hopeful'], ['lounge', 'Lounge jazz'], ['acoustic', 'Easy acoustic'], ['mix', 'Shuffle everything'], ['off', 'No music']];
+    ['hope', 'Bright & hopeful'], ['lounge', 'Lounge jazz'], ['acoustic', 'Easy acoustic'], ['xmas', 'Christmas ambient'], ['mix', 'Shuffle everything'], ['off', 'No music']];
   const LAYOUT = [['classic', 'Classic'], ['mirror', 'Mirrored'], ['center', 'Centered'], ['minimal', 'Minimal'], ['panel', 'Side panel'], ['glance', 'Glance bar'], ['magazine', 'Magazine']];
   const SNDSET = [['soft', 'Soft'], ['click', 'Click'], ['bubble', 'Bubble'], ['chime', 'Chime'], ['retro', 'Retro'], ['wood', 'Wood'], ['space', 'Space']];
-  const FEEL = { tilt: ON, sheen: ON, glass: ON, drift: ON, tod: ON, wx: ON, holi: HOLI, layout: LAYOUT, live: ON, snd: ON, sndSet: SNDSET, vol: VOL, music: MUSIC, musicVol: VOL, strip: ON, boot: ON, kb: ON, kbSpeed: SPEED, fun: FUN, art: ART };
-  const FEEL_DEF = { tilt: 'on', sheen: 'on', glass: 'on', drift: 'on', tod: 'off', wx: 'off', holi: 'subtle', layout: 'classic', live: 'on', snd: 'off', sndSet: 'soft', vol: 'low', music: 'zen', musicVol: 'mid', strip: 'on', boot: 'on', kb: 'on', kbSpeed: 'normal', fun: 'calm', art: 'theme' };
+  const FEEL = { tilt: ON, sheen: ON, glass: ON, drift: ON, tod: ON, wx: ON, holi: HOLI, layout: LAYOUT, live: ON, snd: ON, sndSet: SNDSET, vol: VOL, music: MUSIC, musicVol: VOL, strip: ON, boot: ON, kb: ON, kbSpeed: SPEED, fun: FUN, art: ART, xmas: XMAS };
+  const FEEL_DEF = { tilt: 'on', sheen: 'on', glass: 'on', drift: 'on', tod: 'off', wx: 'off', holi: 'subtle', layout: 'classic', live: 'on', snd: 'off', sndSet: 'soft', vol: 'low', music: 'zen', musicVol: 'mid', strip: 'on', boot: 'on', kb: 'on', kbSpeed: 'normal', fun: 'calm', art: 'theme', xmas: 'wall' };
 
   /* Quick looks: one press sets everything (colors included). Classic clears the part colors. */
   const QUICK = [
@@ -710,9 +711,10 @@ html.hbx-perf .hbx-opt:not(.on):not(:hover) .hbx-pv *{animation-play-state:pause
       case 'drift': return `<div class="hbx-pv"><div class="pv-blobs${on ? ' pv-drift' : ''}"></div></div>`;
       case 'tod': return on ? '<div class="hbx-pv"><div class="pv-tod"></div><span class="pv-tag">☀ → ☾</span></div>' : `<div class="hbx-pv">${OFF}</div>`;
       case 'wx': return on ? '<div class="hbx-pv pv-rainbox"><i class="pv-rain"></i><span class="pv-big">🌧</span></div>' : `<div class="hbx-pv">${OFF}</div>`;
+      case 'xmas': return `<div class="hbx-pv"><span class="pv-big${id === 'wall' ? ' pv-dim' : ''}">${id === 'wall' ? '🏠' : id === 'season' ? '📅🎄' : '🎄✨'}</span></div>`;
       case 'holi': return id === 'off' ? `<div class="hbx-pv">${OFF}</div>` : `<div class="hbx-pv"><span class="pv-big${id === 'full' ? '' : ' pv-dim'}">${id === 'full' ? '🎃 🎄 🎉' : '🎃'}</span></div>`;
       case 'snd': return `<div class="hbx-pv"><span class="pv-snd${on ? '' : ' off'}">${ICONS.sound}</span></div>`;
-      case 'music': return `<div class="hbx-pv"><span class="pv-big" style="font-size:1.7em">${{ zen: '🪷', piano: '🎹', dreamy: '✨', calm: '🌿', night: '🌙', hope: '🌅', lounge: '🎷', acoustic: '🎸', mix: '🔀', off: '🔇' }[id] || '♪'}</span></div>`;
+      case 'music': return `<div class="hbx-pv"><span class="pv-big" style="font-size:1.7em">${{ zen: '🪷', piano: '🎹', dreamy: '✨', calm: '🌿', night: '🌙', hope: '🌅', lounge: '🎷', acoustic: '🎸', xmas: '🎄', mix: '🔀', off: '🔇' }[id] || '♪'}</span></div>`;
       case 'musicVol': return feelPreview('vol', id);
       case 'layout': return layoutPreview(id);
       case 'live': return on ? '<div class="hbx-pv"><div class="pv-lay"><i class="lt" style="bottom:30%"></i><i class="lt lv" style="bottom:8%"></i></div></div>' : '<div class="hbx-pv"><div class="pv-lay"><i class="lt" style="bottom:8%"></i></div></div>';
@@ -785,7 +787,7 @@ html.hbx-perf .hbx-opt:not(.on):not(:hover) .hbx-pv *{animation-play-state:pause
       { key: 'motion', name: 'Futuristic motion', opts: MOTIONS }, { key: 'mset', name: 'Motion colors', opts: MSETS.map(m => [m[0], m[1]]) },
       { key: 'drift', name: 'Slow background drift', opts: ON }, { key: 'tod', name: 'Time-of-day lighting', opts: ON },
       { key: 'wx', name: 'Weather touches (rain, frost)', opts: ON }] },
-    { id: 'holidays', name: 'Holidays', hint: 'Holiday themes and their characters', groups: [{ key: 'holi', name: 'Holiday touches', opts: HOLI }] },
+    { id: 'holidays', name: 'Holidays', hint: 'Holiday themes and their characters', groups: [{ key: 'xmas', name: 'Christmas theme · Evergreen Glow', opts: XMAS }, { key: 'holi', name: 'Holiday touches', opts: HOLI }] },
     { id: 'fun', name: 'Fun', hint: 'Characters that visit now and then', groups: [{ key: 'fun', name: 'Fun level', opts: FUN }, { key: 'palsOften', name: 'How often they visit', opts: OFTEN }] }
   ];
   /* Screen & sound settings (the TV adds these as their own section; the wall can show them under Screen & sound). */

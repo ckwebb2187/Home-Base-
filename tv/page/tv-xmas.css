@@ -1,0 +1,41 @@
+/* ---------- Evergreen Glow (premium Christmas) ---------- */
+html[data-th="evergreenglow"] body { background:radial-gradient(ellipse 120% 90% at 50% 120%, #0E2A1C 0%, #07170F 55%, #040C08 100%) }
+html[data-th="evergreenglow"] #pat { opacity:.05 }
+#xglow, #xbokeh, #xlights { position:fixed; inset:0; pointer-events:none; overflow:hidden; contain:strict }
+/* This theme brings its own glow and light, so the page's usual glow and motes step aside (fewer layers to move). */
+html[data-th="evergreenglow"] #glow, html[data-th="evergreenglow"] #motes, html[data-th="evergreenglow"] #amb { display:none }
+/* Two slow glows, garnet and pine, with a little candlelight between them. Only moved (never scaled or repainted). */
+#xglow i { position:absolute; border-radius:50%; will-change:transform }
+#xglow .g1 { width:70vw; height:75vh; left:-15vw; top:-22vh; background:radial-gradient(closest-side, rgba(179,38,58,.30) 0%, rgba(179,38,58,.10) 38%, transparent 68%); animation:xg1 46s ease-in-out infinite alternate }
+#xglow .g2 { width:75vw; height:85vh; right:-20vw; bottom:-30vh; background:radial-gradient(closest-side, rgba(47,138,87,.30) 0%, rgba(47,138,87,.10) 40%, transparent 70%); animation:xg2 58s ease-in-out infinite alternate }
+#xglow .g3 { width:60vw; height:60vh; left:30vw; top:10vh; background:radial-gradient(closest-side, rgba(217,180,90,.10) 0%, transparent 65%); }
+@keyframes xg1 { from { transform:translate3d(0,0,0) } to { transform:translate3d(10vw,7vh,0) } }
+@keyframes xg2 { from { transform:translate3d(0,0,0) } to { transform:translate3d(-12vw,-6vh,0) } }
+/* Bokeh: soft-edged circles of light (no blur filter, so it stays light on the TV). */
+#xbokeh .bk { position:absolute; border-radius:50%; opacity:0; will-change:transform, opacity; animation:xrise linear infinite }
+#xbokeh .bk.gold { background:radial-gradient(closest-side, rgba(244,214,140,.75) 0%, rgba(217,180,90,.35) 45%, transparent 70%) }
+#xbokeh .bk.red { background:radial-gradient(closest-side, rgba(232,96,110,.6) 0%, rgba(179,38,58,.3) 45%, transparent 70%) }
+#xbokeh .bk.green { background:radial-gradient(closest-side, rgba(120,210,150,.5) 0%, rgba(47,138,87,.28) 45%, transparent 70%) }
+@keyframes xrise { 0% { transform:translate3d(0,0,0); opacity:0 } 15% { opacity:.55 } 70% { opacity:.35 } 100% { transform:translate3d(3vw,-45vh,0); opacity:0 } }
+#xbokeh .fl { position:absolute; top:-2vh; border-radius:50%; background:radial-gradient(closest-side, #fff 40%, rgba(255,255,255,0)); will-change:transform; animation:xfall linear infinite }
+@keyframes xfall { from { transform:translate3d(0,0,0) } 50% { transform:translate3d(1.5vw,52vh,0) } to { transform:translate3d(-1vw,106vh,0) } }
+/* The garland of lights along the top. */
+#xlights { bottom:auto; height:8vh }
+#xlights svg { position:absolute; left:0; top:0; width:100%; height:6vh; overflow:visible }
+#xlights path { fill:none; stroke:rgba(20,40,28,.9); stroke-width:2.2; vector-effect:non-scaling-stroke }
+#xlights .bl { position:absolute; width:.95vh; height:1.35vh; margin:-.2vh 0 0 -.47vh; border-radius:50% 50% 45% 45%; animation:xtw ease-in-out infinite alternate; will-change:opacity; transform:translateZ(0) }
+#xlights .bl::before { content:''; position:absolute; left:50%; top:-.35vh; width:.5vh; height:.45vh; margin-left:-.25vh; border-radius:.1vh; background:#2A3A30 }
+#xlights .bl.r { background:#FF5A6A; box-shadow:0 0 1vh .25vh rgba(255,70,90,.75), 0 0 2.6vh .4vh rgba(200,30,50,.35) }
+#xlights .bl.g { background:#5BE08E; box-shadow:0 0 1vh .25vh rgba(70,220,130,.7), 0 0 2.6vh .4vh rgba(40,150,90,.35) }
+#xlights .bl.y { background:#FFD77A; box-shadow:0 0 1vh .25vh rgba(255,210,110,.8), 0 0 2.6vh .4vh rgba(220,170,60,.35) }
+#xlights .bl.w { background:#FFF4DC; box-shadow:0 0 1vh .25vh rgba(255,240,210,.8), 0 0 2.6vh .4vh rgba(255,220,160,.3) }
+@keyframes xtw { from { opacity:.45 } to { opacity:1 } }
+/* Glass: the Up next card is frosted and translucent, edged in a thin line of gold, glowing garnet and pine. */
+html[data-th="evergreenglow"] .right { background:linear-gradient(160deg, rgba(20,48,34,.55), rgba(10,26,18,.42)) !important;
+  border:1px solid rgba(217,180,90,.28) !important;
+  box-shadow:inset 0 1px 0 rgba(255,240,210,.18), 0 0 4vh rgba(179,38,58,.18), 0 0 9vh rgba(47,138,87,.14) !important;
+  -webkit-backdrop-filter:none !important; backdrop-filter:none !important; animation:none !important }
+/* Candlelight on the clock and date. */
+html[data-th="evergreenglow"] #clock { text-shadow:0 0 3vh rgba(244,214,140,.24), 0 0 8vh rgba(179,38,58,.16) }
+html[data-th="evergreenglow"] #date { color:#E7C982 !important; text-shadow:0 0 2.4vh rgba(231,201,130,.35) !important }
+@media (prefers-reduced-motion: reduce) { #xglow i, #xbokeh i, #xlights .bl { animation:none !important } #xbokeh .fl { display:none } }

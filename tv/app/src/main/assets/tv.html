@@ -333,11 +333,13 @@ body.booting .left > *, body.booting .right, body.booting #photo, body.booting #
 #amb { position:fixed; inset:-4vh -4vw; pointer-events:none;
   background:radial-gradient(70vh 55vh at 18% 22%, var(--glowA), transparent 70%), radial-gradient(60vh 50vh at 82% 70%, var(--glowG), transparent 70%); opacity:.7 }
 html.hbx-drift #amb { animation:pol-drift 900s ease-in-out infinite alternate }
-html.hbx-drift #pat { animation:pol-drift2 1200s ease-in-out infinite alternate }
+/* The pattern is drawn a little bigger than the screen and moved, never repainted (moving background-position redrew
+   the whole screen every frame and made everything choppy on the TV box). */
+html.hbx-drift #pat { inset:-6vh -8vw; will-change:transform; animation:pol-drift2 1200s ease-in-out infinite alternate }
 @keyframes pol-drift { to { transform:translate3d(-3vw,2.5vh,0) } }
 /* While Style is open the extra layers rest, so the panel's previews have the TV's graphics memory to themselves */
 body.sty-open #amb, body.sty-open #tod, body.sty-open #wxfx, body.sty-open #pat { display:none }
-@keyframes pol-drift2 { to { background-position:-6vw 4vh } }
+@keyframes pol-drift2 { to { transform:translate3d(-6vw,4vh,0) } }
 
 /* Time of day: warm mornings, deeper evenings, a calm dimmed night (only when switched on) */
 #tod { position:fixed; inset:0; pointer-events:none; opacity:0; transition:opacity var(--t3) var(--e);
@@ -569,6 +571,47 @@ body.perf .w-bd i { transition:opacity 400ms; scale:1 }
 body.perf .w-chips2 span { backdrop-filter:none }
 @media (prefers-reduced-motion: reduce) { #wrap, #watch, .w-bd i, .w-row, .w-rows, .w-track, .w-card, .w-chip, .w-btn, .w-meta { animation:none !important; transition:none !important } }
 body.w-open #pstrip { display:none !important }
+/* ---------- Evergreen Glow (premium Christmas) ---------- */
+html[data-th="evergreenglow"] body { background:radial-gradient(ellipse 120% 90% at 50% 120%, #0E2A1C 0%, #07170F 55%, #040C08 100%) }
+html[data-th="evergreenglow"] #pat { opacity:.05 }
+#xglow, #xbokeh, #xlights { position:fixed; inset:0; pointer-events:none; overflow:hidden; contain:strict }
+/* This theme brings its own glow and light, so the page's usual glow and motes step aside (fewer layers to move). */
+html[data-th="evergreenglow"] #glow, html[data-th="evergreenglow"] #motes, html[data-th="evergreenglow"] #amb { display:none }
+/* Two slow glows, garnet and pine, with a little candlelight between them. Only moved (never scaled or repainted). */
+#xglow i { position:absolute; border-radius:50%; will-change:transform }
+#xglow .g1 { width:70vw; height:75vh; left:-15vw; top:-22vh; background:radial-gradient(closest-side, rgba(179,38,58,.30) 0%, rgba(179,38,58,.10) 38%, transparent 68%); animation:xg1 46s ease-in-out infinite alternate }
+#xglow .g2 { width:75vw; height:85vh; right:-20vw; bottom:-30vh; background:radial-gradient(closest-side, rgba(47,138,87,.30) 0%, rgba(47,138,87,.10) 40%, transparent 70%); animation:xg2 58s ease-in-out infinite alternate }
+#xglow .g3 { width:60vw; height:60vh; left:30vw; top:10vh; background:radial-gradient(closest-side, rgba(217,180,90,.10) 0%, transparent 65%); }
+@keyframes xg1 { from { transform:translate3d(0,0,0) } to { transform:translate3d(10vw,7vh,0) } }
+@keyframes xg2 { from { transform:translate3d(0,0,0) } to { transform:translate3d(-12vw,-6vh,0) } }
+/* Bokeh: soft-edged circles of light (no blur filter, so it stays light on the TV). */
+#xbokeh .bk { position:absolute; border-radius:50%; opacity:0; will-change:transform, opacity; animation:xrise linear infinite }
+#xbokeh .bk.gold { background:radial-gradient(closest-side, rgba(244,214,140,.75) 0%, rgba(217,180,90,.35) 45%, transparent 70%) }
+#xbokeh .bk.red { background:radial-gradient(closest-side, rgba(232,96,110,.6) 0%, rgba(179,38,58,.3) 45%, transparent 70%) }
+#xbokeh .bk.green { background:radial-gradient(closest-side, rgba(120,210,150,.5) 0%, rgba(47,138,87,.28) 45%, transparent 70%) }
+@keyframes xrise { 0% { transform:translate3d(0,0,0); opacity:0 } 15% { opacity:.55 } 70% { opacity:.35 } 100% { transform:translate3d(3vw,-45vh,0); opacity:0 } }
+#xbokeh .fl { position:absolute; top:-2vh; border-radius:50%; background:radial-gradient(closest-side, #fff 40%, rgba(255,255,255,0)); will-change:transform; animation:xfall linear infinite }
+@keyframes xfall { from { transform:translate3d(0,0,0) } 50% { transform:translate3d(1.5vw,52vh,0) } to { transform:translate3d(-1vw,106vh,0) } }
+/* The garland of lights along the top. */
+#xlights { bottom:auto; height:8vh }
+#xlights svg { position:absolute; left:0; top:0; width:100%; height:6vh; overflow:visible }
+#xlights path { fill:none; stroke:rgba(20,40,28,.9); stroke-width:2.2; vector-effect:non-scaling-stroke }
+#xlights .bl { position:absolute; width:.95vh; height:1.35vh; margin:-.2vh 0 0 -.47vh; border-radius:50% 50% 45% 45%; animation:xtw ease-in-out infinite alternate; will-change:opacity; transform:translateZ(0) }
+#xlights .bl::before { content:''; position:absolute; left:50%; top:-.35vh; width:.5vh; height:.45vh; margin-left:-.25vh; border-radius:.1vh; background:#2A3A30 }
+#xlights .bl.r { background:#FF5A6A; box-shadow:0 0 1vh .25vh rgba(255,70,90,.75), 0 0 2.6vh .4vh rgba(200,30,50,.35) }
+#xlights .bl.g { background:#5BE08E; box-shadow:0 0 1vh .25vh rgba(70,220,130,.7), 0 0 2.6vh .4vh rgba(40,150,90,.35) }
+#xlights .bl.y { background:#FFD77A; box-shadow:0 0 1vh .25vh rgba(255,210,110,.8), 0 0 2.6vh .4vh rgba(220,170,60,.35) }
+#xlights .bl.w { background:#FFF4DC; box-shadow:0 0 1vh .25vh rgba(255,240,210,.8), 0 0 2.6vh .4vh rgba(255,220,160,.3) }
+@keyframes xtw { from { opacity:.45 } to { opacity:1 } }
+/* Glass: the Up next card is frosted and translucent, edged in a thin line of gold, glowing garnet and pine. */
+html[data-th="evergreenglow"] .right { background:linear-gradient(160deg, rgba(20,48,34,.55), rgba(10,26,18,.42)) !important;
+  border:1px solid rgba(217,180,90,.28) !important;
+  box-shadow:inset 0 1px 0 rgba(255,240,210,.18), 0 0 4vh rgba(179,38,58,.18), 0 0 9vh rgba(47,138,87,.14) !important;
+  -webkit-backdrop-filter:none !important; backdrop-filter:none !important; animation:none !important }
+/* Candlelight on the clock and date. */
+html[data-th="evergreenglow"] #clock { text-shadow:0 0 3vh rgba(244,214,140,.24), 0 0 8vh rgba(179,38,58,.16) }
+html[data-th="evergreenglow"] #date { color:#E7C982 !important; text-shadow:0 0 2.4vh rgba(231,201,130,.35) !important }
+@media (prefers-reduced-motion: reduce) { #xglow i, #xbokeh i, #xlights .bl { animation:none !important } #xbokeh .fl { display:none } }
 
 .stk { display:inline-block; width:var(--sz, 48px); height:var(--sz, 48px); flex:none; transform:rotate(var(--r0, 0deg)); pointer-events:none }
 .stk-a { display:block; width:100%; height:100%; animation:var(--an, none) var(--du, 4s) ease-in-out var(--dl, 0s) infinite; transform-origin:50% 60%; will-change:transform }
@@ -716,16 +759,17 @@ window.HBLook = window.HBLook || (() => {
   /* The feel settings: each effect has its own switch (they don't change the quick look). Calm by default. */
   const ON = [['on', 'On'], ['off', 'Off']];
   const HOLI = [['subtle', 'Subtle'], ['full', 'Full'], ['off', 'Off']];
+  const XMAS = [['wall', 'Follow the wall'], ['season', 'Each Christmas'], ['glow', 'On now']];
   const VOL = [['low', 'Quiet'], ['mid', 'Medium'], ['high', 'Loud']];
   const SPEED = [['slow', 'Slow'], ['normal', 'Normal'], ['fast', 'Fast']];
   const FUN = [['calm', 'Calm'], ['playful', 'Playful'], ['party', 'Party']];
   const ART = [['theme', 'In my colors'], ['real', 'Original app art']];
   const MUSIC = [['zen', 'Zen meditation'], ['piano', 'Soft piano'], ['dreamy', 'Dreamy ambient'], ['calm', 'Calm & peaceful'], ['night', 'Night & starlight'],
-    ['hope', 'Bright & hopeful'], ['lounge', 'Lounge jazz'], ['acoustic', 'Easy acoustic'], ['mix', 'Shuffle everything'], ['off', 'No music']];
+    ['hope', 'Bright & hopeful'], ['lounge', 'Lounge jazz'], ['acoustic', 'Easy acoustic'], ['xmas', 'Christmas ambient'], ['mix', 'Shuffle everything'], ['off', 'No music']];
   const LAYOUT = [['classic', 'Classic'], ['mirror', 'Mirrored'], ['center', 'Centered'], ['minimal', 'Minimal'], ['panel', 'Side panel'], ['glance', 'Glance bar'], ['magazine', 'Magazine']];
   const SNDSET = [['soft', 'Soft'], ['click', 'Click'], ['bubble', 'Bubble'], ['chime', 'Chime'], ['retro', 'Retro'], ['wood', 'Wood'], ['space', 'Space']];
-  const FEEL = { tilt: ON, sheen: ON, glass: ON, drift: ON, tod: ON, wx: ON, holi: HOLI, layout: LAYOUT, live: ON, snd: ON, sndSet: SNDSET, vol: VOL, music: MUSIC, musicVol: VOL, strip: ON, boot: ON, kb: ON, kbSpeed: SPEED, fun: FUN, art: ART };
-  const FEEL_DEF = { tilt: 'on', sheen: 'on', glass: 'on', drift: 'on', tod: 'off', wx: 'off', holi: 'subtle', layout: 'classic', live: 'on', snd: 'off', sndSet: 'soft', vol: 'low', music: 'zen', musicVol: 'mid', strip: 'on', boot: 'on', kb: 'on', kbSpeed: 'normal', fun: 'calm', art: 'theme' };
+  const FEEL = { tilt: ON, sheen: ON, glass: ON, drift: ON, tod: ON, wx: ON, holi: HOLI, layout: LAYOUT, live: ON, snd: ON, sndSet: SNDSET, vol: VOL, music: MUSIC, musicVol: VOL, strip: ON, boot: ON, kb: ON, kbSpeed: SPEED, fun: FUN, art: ART, xmas: XMAS };
+  const FEEL_DEF = { tilt: 'on', sheen: 'on', glass: 'on', drift: 'on', tod: 'off', wx: 'off', holi: 'subtle', layout: 'classic', live: 'on', snd: 'off', sndSet: 'soft', vol: 'low', music: 'zen', musicVol: 'mid', strip: 'on', boot: 'on', kb: 'on', kbSpeed: 'normal', fun: 'calm', art: 'theme', xmas: 'wall' };
 
   /* Quick looks: one press sets everything (colors included). Classic clears the part colors. */
   const QUICK = [
@@ -1352,9 +1396,10 @@ html.hbx-perf .hbx-opt:not(.on):not(:hover) .hbx-pv *{animation-play-state:pause
       case 'drift': return `<div class="hbx-pv"><div class="pv-blobs${on ? ' pv-drift' : ''}"></div></div>`;
       case 'tod': return on ? '<div class="hbx-pv"><div class="pv-tod"></div><span class="pv-tag">☀ → ☾</span></div>' : `<div class="hbx-pv">${OFF}</div>`;
       case 'wx': return on ? '<div class="hbx-pv pv-rainbox"><i class="pv-rain"></i><span class="pv-big">🌧</span></div>' : `<div class="hbx-pv">${OFF}</div>`;
+      case 'xmas': return `<div class="hbx-pv"><span class="pv-big${id === 'wall' ? ' pv-dim' : ''}">${id === 'wall' ? '🏠' : id === 'season' ? '📅🎄' : '🎄✨'}</span></div>`;
       case 'holi': return id === 'off' ? `<div class="hbx-pv">${OFF}</div>` : `<div class="hbx-pv"><span class="pv-big${id === 'full' ? '' : ' pv-dim'}">${id === 'full' ? '🎃 🎄 🎉' : '🎃'}</span></div>`;
       case 'snd': return `<div class="hbx-pv"><span class="pv-snd${on ? '' : ' off'}">${ICONS.sound}</span></div>`;
-      case 'music': return `<div class="hbx-pv"><span class="pv-big" style="font-size:1.7em">${{ zen: '🪷', piano: '🎹', dreamy: '✨', calm: '🌿', night: '🌙', hope: '🌅', lounge: '🎷', acoustic: '🎸', mix: '🔀', off: '🔇' }[id] || '♪'}</span></div>`;
+      case 'music': return `<div class="hbx-pv"><span class="pv-big" style="font-size:1.7em">${{ zen: '🪷', piano: '🎹', dreamy: '✨', calm: '🌿', night: '🌙', hope: '🌅', lounge: '🎷', acoustic: '🎸', xmas: '🎄', mix: '🔀', off: '🔇' }[id] || '♪'}</span></div>`;
       case 'musicVol': return feelPreview('vol', id);
       case 'layout': return layoutPreview(id);
       case 'live': return on ? '<div class="hbx-pv"><div class="pv-lay"><i class="lt" style="bottom:30%"></i><i class="lt lv" style="bottom:8%"></i></div></div>' : '<div class="hbx-pv"><div class="pv-lay"><i class="lt" style="bottom:8%"></i></div></div>';
@@ -1427,7 +1472,7 @@ html.hbx-perf .hbx-opt:not(.on):not(:hover) .hbx-pv *{animation-play-state:pause
       { key: 'motion', name: 'Futuristic motion', opts: MOTIONS }, { key: 'mset', name: 'Motion colors', opts: MSETS.map(m => [m[0], m[1]]) },
       { key: 'drift', name: 'Slow background drift', opts: ON }, { key: 'tod', name: 'Time-of-day lighting', opts: ON },
       { key: 'wx', name: 'Weather touches (rain, frost)', opts: ON }] },
-    { id: 'holidays', name: 'Holidays', hint: 'Holiday themes and their characters', groups: [{ key: 'holi', name: 'Holiday touches', opts: HOLI }] },
+    { id: 'holidays', name: 'Holidays', hint: 'Holiday themes and their characters', groups: [{ key: 'xmas', name: 'Christmas theme · Evergreen Glow', opts: XMAS }, { key: 'holi', name: 'Holiday touches', opts: HOLI }] },
     { id: 'fun', name: 'Fun', hint: 'Characters that visit now and then', groups: [{ key: 'fun', name: 'Fun level', opts: FUN }, { key: 'palsOften', name: 'How often they visit', opts: OFTEN }] }
   ];
   /* Screen & sound settings (the TV adds these as their own section; the wall can show them under Screen & sound). */
@@ -1906,6 +1951,8 @@ const HOLIDAYS = [
       c: { r: '#E5485F', s: '#F7A9BA', g: '#3C9E62', b: '#66C3D6', y: '#F4C64E', w: '#FFFFFF', n: '#B9784A', l: '#3D4F5C', p: '#A78BDB', k: '#2B3138' }, motifs: ['snowglobe', 'candycane', 'gingerbread', 'peppermint', 'ornament', 'gift', 'tree', 'snowflake', 'holly', 'stocking'], chars: ['snowman', 'gingerbread', 'snowglobe', 'santa'], walk: 'gingerbread', word: 'JOY' },
     { id: 'classicchristmas', name: 'Classic Christmas', note: 'Red, green and cream', main: '#A82830', hi: '#1F6B3A', bg: '#F6EEDF', bgDark: '#1A120E', font: 'swash', motion: 'lights',
       c: { r: '#C62F36', g: '#2E7D4A', y: '#E2B23C', b: '#3E7CB1', w: '#FFF8EC', n: '#8B5A33', l: '#3B2A22', k: '#2A1E18', s: '#F0A8A0' }, motifs: ['holly', 'ornament', 'stocking', 'tree', 'gift', 'candycane', 'star', 'gingerbread'], chars: ['santa', 'reindeer', 'snowman', 'tree'], walk: 'reindeer', word: 'NOEL' },
+    { id: 'evergreenglow', name: 'Evergreen Glow', note: 'Deep pine, garnet and candlelight gold', main: '#B3263A', hi: '#D9B45A', bg: '#E6EFE8', bgDark: '#06140E', font: 'cinzel', motion: '',
+      alt: '#1F6B45', c: { r: '#B3263A', g: '#2F8A57', y: '#D9B45A', w: '#FFF9EE', b: '#6FA8C9', n: '#8B5A33', l: '#1E3A2C', k: '#14201A', s: '#E8A6A6' }, motifs: ['holly', 'ornament', 'star', 'tree', 'snowflake', 'sparkle'], chars: ['reindeer', 'tree', 'snowman', 'santa'], walk: 'reindeer', word: 'NOEL' },
     { id: 'silentnight', name: 'Silent Night', note: 'Navy, silver and gold', main: '#1F3A68', hi: '#C9A227', bg: '#E3E9F4', bgDark: '#0C1426', font: 'cinzel', motion: 'snow',
       c: { r: '#8FA7D6', b: '#9CC3EA', y: '#E8C35A', g: '#2F5E6E', w: '#FFFFFF', n: '#7A6A5A', l: '#22324F', s: '#C9D6EE', k: '#1A2438' }, motifs: ['star', 'snowflake', 'moon', 'tree', 'ornament', 'snowglobe', 'sparkle'], chars: ['snowman', 'reindeer', 'snowglobe', 'tree'], walk: 'reindeer', word: 'PEACE' }] }
 ];
@@ -2297,6 +2344,8 @@ function applyLook(data) {
   const lk = styleLook((data && data.look) || {}), key = JSON.stringify(lk);
   if (key === D.look) return; D.look = key;
   const ht = lk.th ? holThemeById(lk.th) : null; D.ht = ht;
+  document.documentElement.dataset.th = ht ? ht.id : '';
+  try { if (typeof xmasFx === 'function') xmasFx(!!ht && ht.id === 'evergreenglow'); } catch (e) {}
   /* The music picks its style from the holiday theme showing (spooky music box for Halloween, sleigh bells, ...). */
   S.settings.holidayMode = ht ? 'pick' : 'off'; S.settings.holidayTheme = ht ? ht.id : '';
   /* A palette picked in Style wins over the holiday's colors (the holiday's characters and pattern stay). */
@@ -2346,7 +2395,7 @@ async function sendTileTheme(ht, main, tk) {
   }
   if (key !== D.look) return;   /* the theme changed again meanwhile */
   const bm = typeof PRESETS !== 'undefined' && PRESETS && STY && STY.hbx ? (STY.hbx.colors || {}).btn : ''; if (bm) main = bm;
-  try { HB_APP.theme(JSON.stringify({ look: key, main, accent: tk['--accent'], gold: tk['--gold'], stickers })); } catch (e) {}
+  try { HB_APP.theme(JSON.stringify({ look: key, main, accent: tk['--accent'], gold: tk['--gold'], stickers, ...(ht && ht.alt ? { alt: ht.alt } : {}) })); } catch (e) {}
 }
 
 /* A few soft glowing dots drifting up, in the theme's colors (CSS only, so it stays light on the TV box). */
@@ -2646,6 +2695,8 @@ function styleLook(lk) {
   if (!PRESETS) return lk;   /* the first draw runs before this part of the page has loaded */
   const s = styLoad(), p = PALETTES[s.palette];
   if (s.hbx && s.hbx.holi === 'off' && lk.th) { lk = { ...lk }; delete lk.th; }
+  const xm = s.hbx && s.hbx.xmas, xh = xm === 'season' ? holidayOn(today()) : null;
+  if (xm === 'glow' || (xh && xh.id === 'christmas')) return { ...lk, th: 'evergreenglow', main: '', hi: '', sty: 0 };
   if (!p[1]) return lk;
   const out = { main: p[1], hi: p[2], sty: s.palette };
   if (s.wall && lk.th) out.th = lk.th;   /* a holiday on the wall still brings its characters */
@@ -2680,7 +2731,7 @@ let styPushT = 0;
 function styPush() {
   if (DEMO) return;
   clearTimeout(styPushT);
-  styPushT = setTimeout(() => { try { fetch('style', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...styLoad(), page: '13.4', mode: MODE }) }).catch(() => {}); } catch (e) {} }, 600);
+  styPushT = setTimeout(() => { try { fetch('style', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...styLoad(), page: '13.6', mode: MODE }) }).catch(() => {}); } catch (e) {} }, 600);
 }
 /* A newer style saved somewhere else (the phone, the other screen) arrives with tv.json. */
 function styleFromFeed(data) {
@@ -2898,7 +2949,7 @@ function panelOpen() {
   if (!p) {
     p = document.createElement('div'); p.id = 'sty'; document.body.appendChild(p);
     const secs = tvSections();
-    p.innerHTML = `<div class="sty-card"><div class="sty-h"><b>Style & settings</b><span>${MODE === 'style' ? 'Tap a tile, or use the arrow keys' : '▲▼ section · ▶ / OK in · OK picks · Back out'} · <em class="sty-ver">Page 13.4</em></span></div>
+    p.innerHTML = `<div class="sty-card"><div class="sty-h"><b>Style & settings</b><span>${MODE === 'style' ? 'Tap a tile, or use the arrow keys' : '▲▼ section · ▶ / OK in · OK picks · Back out'} · <em class="sty-ver">Page 13.6</em></span></div>
       <div class="sty-body"><nav class="sty-nav">${secs.map((s, i) => `<div class="sty-ni" data-s="${i}">${s.icon || ''}<b>${esc(s.name)}</b><span>${esc(s.hint || '')}</span></div>`).join('')}</nav><div class="sty-pane"></div></div></div>`;
     p.addEventListener('click', e => {
       const ni = e.target.closest('.sty-ni'); if (ni) { panelShow(+ni.dataset.s); PANEL.zone = 'nav'; panelFocus(); return; }
@@ -3389,6 +3440,44 @@ document.addEventListener('keydown', e => { if (e.key === 'w' && !WATCH.open && 
 
 /* Watch takes the remote's buttons while it's open; Style gets them otherwise. */
 (function () { const styleKey = window.hbKey; window.hbKey = k => WATCH.open ? watchKey(k) : styleKey(k); })();
+
+/* ---------- Evergreen Glow: the premium Christmas theme ----------
+   Deep pine with garnet and candlelight gold. Its layers sit behind the screen's content: two slow glows (garnet and
+   pine) that drift, warm bokeh rising, a light snowfall, and a garland of lights along the top that twinkles. Built
+   once when the theme turns on and removed when it turns off; everything moves with transform and opacity only. */
+var XMAS = { on: false };
+function xmasFx(on) {
+  on = !!on && MODE !== 'style';
+  if (on === XMAS.on) return; XMAS.on = on;
+  ['xglow', 'xbokeh', 'xlights'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); });
+  if (!on) return;
+  const wrap = $('#wrap'), mk = id => { const el = document.createElement('div'); el.id = id; el.setAttribute('aria-hidden', 'true'); document.body.insertBefore(el, wrap); return el; };
+  const r = n => (holHash('xmas' + n) % 1000) / 1000;
+  mk('xglow').innerHTML = '<i class="g1"></i><i class="g2"></i><i class="g3"></i>';
+  /* Bokeh: soft circles of warm light rising slowly, and a few fine snowflakes falling. */
+  let h = '';
+  const cols = ['gold', 'gold', 'red', 'green', 'gold', 'red', 'green'];
+  for (let i = 0; i < 8; i++) {
+    const s = 1.6 + r(i) * 5.4, du = 22 + r(i + 40) * 20;
+    h += `<i class="bk ${cols[i % cols.length]}" style="left:${(r(i + 9) * 100).toFixed(1)}vw;top:${(40 + r(i + 21) * 60).toFixed(1)}vh;width:${s.toFixed(2)}vh;height:${s.toFixed(2)}vh;animation-duration:${du.toFixed(1)}s;animation-delay:${(-r(i + 3) * du).toFixed(1)}s"></i>`;
+  }
+  for (let i = 0; i < 12; i++) {
+    const s = 0.25 + r(i + 70) * 0.45, du = 16 + r(i + 90) * 14;
+    h += `<i class="fl" style="left:${(r(i + 55) * 100).toFixed(1)}vw;width:${s.toFixed(2)}vh;height:${s.toFixed(2)}vh;animation-duration:${du.toFixed(1)}s;animation-delay:${(-r(i + 33) * du).toFixed(1)}s;opacity:${(0.35 + r(i + 11) * 0.45).toFixed(2)}"></i>`;
+  }
+  mk('xbokeh').innerHTML = h;
+  /* The garland: a wire that sags gently across the top, with bulbs in garnet, pine, gold and warm white. */
+  const N = 24, bulbs = ['r', 'g', 'y', 'w'];
+  const y = x => 1.4 + 2.6 * Math.sin(Math.PI * ((x * 3) % 1));   // three gentle swags across the width, in vh
+  let path = '', b = '';
+  for (let k = 0; k <= 120; k++) { const x = k / 120; path += (k ? 'L' : 'M') + (x * 1000).toFixed(1) + ' ' + (y(x) * 10).toFixed(1); }
+  for (let i = 0; i < N; i++) {
+    const x = (i + 0.5) / N;
+    b += `<i class="bl ${bulbs[i % 4]}" style="left:${(x * 100).toFixed(2)}vw;top:${y(x).toFixed(2)}vh;animation-duration:${(4 + r(i + 120) * 4).toFixed(2)}s;animation-delay:${(-r(i + 150) * 5).toFixed(2)}s"></i>`;
+  }
+  mk('xlights').innerHTML = `<svg viewBox="0 0 1000 60" preserveAspectRatio="none"><path d="${path}"/></svg>${b}`;
+}
+try { xmasFx(document.documentElement.dataset.th === 'evergreenglow'); } catch (e) {}
 styApply(false);
 if (MODE === 'style') { document.body.classList.add('home'); panelOpen(); }
 setInterval(() => HBLook.lock(), 60000);

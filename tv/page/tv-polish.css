@@ -39,11 +39,13 @@ body.booting .left > *, body.booting .right, body.booting #photo, body.booting #
 #amb { position:fixed; inset:-4vh -4vw; pointer-events:none;
   background:radial-gradient(70vh 55vh at 18% 22%, var(--glowA), transparent 70%), radial-gradient(60vh 50vh at 82% 70%, var(--glowG), transparent 70%); opacity:.7 }
 html.hbx-drift #amb { animation:pol-drift 900s ease-in-out infinite alternate }
-html.hbx-drift #pat { animation:pol-drift2 1200s ease-in-out infinite alternate }
+/* The pattern is drawn a little bigger than the screen and moved, never repainted (moving background-position redrew
+   the whole screen every frame and made everything choppy on the TV box). */
+html.hbx-drift #pat { inset:-6vh -8vw; will-change:transform; animation:pol-drift2 1200s ease-in-out infinite alternate }
 @keyframes pol-drift { to { transform:translate3d(-3vw,2.5vh,0) } }
 /* While Style is open the extra layers rest, so the panel's previews have the TV's graphics memory to themselves */
 body.sty-open #amb, body.sty-open #tod, body.sty-open #wxfx, body.sty-open #pat { display:none }
-@keyframes pol-drift2 { to { background-position:-6vw 4vh } }
+@keyframes pol-drift2 { to { transform:translate3d(-6vw,4vh,0) } }
 
 /* Time of day: warm mornings, deeper evenings, a calm dimmed night (only when switched on) */
 #tod { position:fixed; inset:0; pointer-events:none; opacity:0; transition:opacity var(--t3) var(--e);

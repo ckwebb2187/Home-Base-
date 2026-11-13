@@ -7,7 +7,7 @@ rd = lambda p: open(os.path.join(HERE, p), encoding='utf-8').read()
 page = rd('live/tv-page-11.9-D.html')
 look = rd('hb-look.js'); panel_js = rd('tv-style-panel.js'); panel_css = rd('tv-style-panel.css')
 pol_js = rd('tv-polish.js'); pol_css = rd('tv-polish.css')
-watch_js = rd('tv-watch.js'); watch_css = rd('tv-watch.css')
+watch_js = rd('tv-watch.js'); watch_css = rd('tv-watch.css'); xmas_js = rd('tv-xmas.js'); xmas_css = rd('tv-xmas.css')
 
 def once(s, old, new):
     n = s.count(old)
@@ -16,7 +16,7 @@ def once(s, old, new):
 
 # 1. CSS: the old Style panel rules make way for the new ones.
 i = page.index('#sty { display:none;'); j = page.index('\n', page.index('.sty-r button { padding:6px 12px } }', i))
-page = page[:i] + panel_css.strip() + '\n' + pol_css.strip() + '\n' + watch_css.strip() + page[j:]
+page = page[:i] + panel_css.strip() + '\n' + pol_css.strip() + '\n' + watch_css.strip() + '\n' + xmas_css.strip() + page[j:]
 
 # 2. The shared look module, in its own script before the page's script.
 assert '</script' not in look
@@ -56,7 +56,7 @@ page = once(page, "function styleFromFeed(data) {\n  if (!PRESETS) return;\n  co
             "  const r = data && data.style;\n  if (!r || typeof r !== 'object' || !(+r.ts > styLoad().ts)) return;\n"
             "  const keep = styLoad().hbx;\n  STY = styClean(r);\n  if (+keep.ts > +STY.hbx.ts) STY.hbx = keep;")
 page = once(page, "  if (PANEL.open) panelDraw();\n}", "  if (PANEL.open) panelMarks();\n}")
-page = once(page, "page: '11.9-D', mode: MODE", "page: '13.4', mode: MODE")
+page = once(page, "page: '11.9-D', mode: MODE", "page: '13.6', mode: MODE")
 
 # 4b. Premium polish hooks: holiday level, screensaver pan & zoom, layers refreshed with each load, startup on open.
 page = once(page, "  const s = styLoad(), p = PALETTES[s.palette];\n  if (!p[1]) return lk;",
@@ -67,6 +67,23 @@ page = once(page, "    PH.timer = setTimeout(nextPhoto, PHOTO_MS);", "    PH.tim
 page = once(page, "  applyLook(D.data); render();\n}\nwindow.hbRefresh", "  applyLook(D.data); render();\n  if (typeof POL !== 'undefined' && POL) polTick();\n}\nwindow.hbRefresh")
 page = once(page, "  HBLook.apply(s.hbx);\n", "  HBLook.apply(s.hbx);\n  if (typeof POL !== 'undefined' && POL) polApply();\n")
 page = once(page, "requestAnimationFrame(() => { document.body.classList.add('ready');", "try { window.hbBoot(); } catch (e) {}\nrequestAnimationFrame(() => { document.body.classList.add('ready');")
+
+# 4c. Evergreen Glow: a premium Christmas theme, which Style can turn on (now, or for the Christmas season).
+page = once(page, "    { id: 'silentnight', name: 'Silent Night'",
+            "    { id: 'evergreenglow', name: 'Evergreen Glow', note: 'Deep pine, garnet and candlelight gold', main: '#B3263A', hi: '#D9B45A', bg: '#E6EFE8', bgDark: '#06140E', font: 'cinzel', motion: '',\n"
+            "      c: { r: '#B3263A', g: '#2F8A57', y: '#D9B45A', w: '#FFF9EE', b: '#6FA8C9', n: '#8B5A33', l: '#1E3A2C', k: '#14201A', s: '#E8A6A6' }, motifs: ['holly', 'ornament', 'star', 'tree', 'snowflake', 'sparkle'], chars: ['reindeer', 'tree', 'snowman', 'santa'], walk: 'reindeer', word: 'NOEL' },\n"
+            "    { id: 'silentnight', name: 'Silent Night'")
+page = once(page, "  if (!p[1]) return lk;\n  const out = { main: p[1], hi: p[2], sty: s.palette };",
+            "  const xm = s.hbx && s.hbx.xmas, xh = xm === 'season' ? holidayOn(today()) : null;\n"
+            "  if (xm === 'glow' || (xh && xh.id === 'christmas')) return { ...lk, th: 'evergreenglow', main: '', hi: '', sty: 0 };\n"
+            "  if (!p[1]) return lk;\n  const out = { main: p[1], hi: p[2], sty: s.palette };")
+page = once(page, "  const ht = lk.th ? holThemeById(lk.th) : null; D.ht = ht;",
+            "  const ht = lk.th ? holThemeById(lk.th) : null; D.ht = ht;\n"
+            "  document.documentElement.dataset.th = ht ? ht.id : '';\n  try { if (typeof xmasFx === 'function') xmasFx(!!ht && ht.id === 'evergreenglow'); } catch (e) {}")
+
+page = once(page, "HB_APP.theme(JSON.stringify({ look: key, main, accent: tk['--accent'], gold: tk['--gold'], stickers }));",
+            "HB_APP.theme(JSON.stringify({ look: key, main, accent: tk['--accent'], gold: tk['--gold'], stickers, ...(ht && ht.alt ? { alt: ht.alt } : {}) }));")
+page = once(page, "c: { r: '#B3263A', g: '#2F8A57', y: '#D9B45A'", "alt: '#1F6B45', c: { r: '#B3263A', g: '#2F8A57', y: '#D9B45A'")
 
 # 5. The Style panel itself.
 i = page.rindex('/* ---------- the Style panel ----------'); j = page.index("styApply(false);\nif (MODE === 'style')", i)
@@ -99,7 +116,7 @@ keys = """
 /* Watch takes the remote's buttons while it's open; Style gets them otherwise. */
 (function () { const styleKey = window.hbKey; window.hbKey = k => WATCH.open ? watchKey(k) : styleKey(k); })();
 """
-page = page[:i] + host + panel_js + '\n' + pol_js + '\n' + watch_js + keys + page[j:]
+page = page[:i] + host + panel_js + '\n' + pol_js + '\n' + watch_js + keys + '\n' + xmas_js + page[j:]
 page = once(page, "if (MODE === 'style') { document.body.classList.add('home'); panelOpen(); }",
             "if (MODE === 'style') { document.body.classList.add('home'); panelOpen(); }\nsetInterval(() => HBLook.lock(), 60000);")
 
