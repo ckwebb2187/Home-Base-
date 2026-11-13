@@ -490,6 +490,10 @@ html[data-hbx-layout="magazine"] body.home #date { order:-1; margin:0 0 var(--s2
 html[data-hbx-layout="magazine"] body.home #clock { font-size:22vh; font-weight:300; letter-spacing:-.06em }
 html[data-hbx-layout="magazine"] body.home #wrap { grid-template-columns:minmax(0, 1.2fr) minmax(0, .8fr) }
 html[data-hbx-layout="magazine"] body.home .ev .what { font-weight:500 }
+
+/* The Style and Settings buttons sit at the top right (drawn by the app): the screen starts a little lower so nothing sits under them. */
+body.gear-top #wrap { padding-top:calc(6.5vh + 4vh) }
+body.gear-top #pstrip { right:calc(var(--s4) * 2.25 + 13vw) }
 /* ---------- Watch ("What should I watch?"): full screen, Nuvio-style ---------- */
 #watch { display:none; position:fixed; inset:0; z-index:25; color:#fff; font-family:var(--f-body); overflow:hidden; background:#05070a }
 /* It sits below the home screen: opening scrolls everything up, closing scrolls back down. */
@@ -2676,7 +2680,7 @@ let styPushT = 0;
 function styPush() {
   if (DEMO) return;
   clearTimeout(styPushT);
-  styPushT = setTimeout(() => { try { fetch('style', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...styLoad(), page: '13.3', mode: MODE }) }).catch(() => {}); } catch (e) {} }, 600);
+  styPushT = setTimeout(() => { try { fetch('style', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...styLoad(), page: '13.4', mode: MODE }) }).catch(() => {}); } catch (e) {} }, 600);
 }
 /* A newer style saved somewhere else (the phone, the other screen) arrives with tv.json. */
 function styleFromFeed(data) {
@@ -2894,7 +2898,7 @@ function panelOpen() {
   if (!p) {
     p = document.createElement('div'); p.id = 'sty'; document.body.appendChild(p);
     const secs = tvSections();
-    p.innerHTML = `<div class="sty-card"><div class="sty-h"><b>Style & settings</b><span>${MODE === 'style' ? 'Tap a tile, or use the arrow keys' : '▲▼ section · ▶ / OK in · OK picks · Back out'} · <em class="sty-ver">Page 13.3</em></span></div>
+    p.innerHTML = `<div class="sty-card"><div class="sty-h"><b>Style & settings</b><span>${MODE === 'style' ? 'Tap a tile, or use the arrow keys' : '▲▼ section · ▶ / OK in · OK picks · Back out'} · <em class="sty-ver">Page 13.4</em></span></div>
       <div class="sty-body"><nav class="sty-nav">${secs.map((s, i) => `<div class="sty-ni" data-s="${i}">${s.icon || ''}<b>${esc(s.name)}</b><span>${esc(s.hint || '')}</span></div>`).join('')}</nav><div class="sty-pane"></div></div></div>`;
     p.addEventListener('click', e => {
       const ni = e.target.closest('.sty-ni'); if (ni) { panelShow(+ni.dataset.s); PANEL.zone = 'nav'; panelFocus(); return; }

@@ -119,7 +119,7 @@ function panelOpen() {
   if (!p) {
     p = document.createElement('div'); p.id = 'sty'; document.body.appendChild(p);
     const secs = tvSections();
-    p.innerHTML = `<div class="sty-card"><div class="sty-h"><b>Style & settings</b><span>${MODE === 'style' ? 'Tap a tile, or use the arrow keys' : '▲▼ section · ▶ / OK in · OK picks · Back out'} · <em class="sty-ver">Page 13.3</em></span></div>
+    p.innerHTML = `<div class="sty-card"><div class="sty-h"><b>Style & settings</b><span>${MODE === 'style' ? 'Tap a tile, or use the arrow keys' : '▲▼ section · ▶ / OK in · OK picks · Back out'} · <em class="sty-ver">Page 13.4</em></span></div>
       <div class="sty-body"><nav class="sty-nav">${secs.map((s, i) => `<div class="sty-ni" data-s="${i}">${s.icon || ''}<b>${esc(s.name)}</b><span>${esc(s.hint || '')}</span></div>`).join('')}</nav><div class="sty-pane"></div></div></div>`;
     p.addEventListener('click', e => {
       const ni = e.target.closest('.sty-ni'); if (ni) { panelShow(+ni.dataset.s); PANEL.zone = 'nav'; panelFocus(); return; }

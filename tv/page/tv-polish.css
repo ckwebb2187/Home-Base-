@@ -196,3 +196,7 @@ html[data-hbx-layout="magazine"] body.home #date { order:-1; margin:0 0 var(--s2
 html[data-hbx-layout="magazine"] body.home #clock { font-size:22vh; font-weight:300; letter-spacing:-.06em }
 html[data-hbx-layout="magazine"] body.home #wrap { grid-template-columns:minmax(0, 1.2fr) minmax(0, .8fr) }
 html[data-hbx-layout="magazine"] body.home .ev .what { font-weight:500 }
+
+/* The Style and Settings buttons sit at the top right (drawn by the app): the screen starts a little lower so nothing sits under them. */
+body.gear-top #wrap { padding-top:calc(6.5vh + 4vh) }
+body.gear-top #pstrip { right:calc(var(--s4) * 2.25 + 13vw) }

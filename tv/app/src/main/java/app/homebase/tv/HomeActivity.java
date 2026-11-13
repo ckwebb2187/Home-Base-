@@ -329,7 +329,8 @@ public class HomeActivity extends Activity {
         lp.leftMargin = pad; lp.bottomMargin = Math.round(H * 0.03f);
         root.addView(label, lp);
 
-        // The small Style and Settings buttons, bottom right (or in the app row; Style → Settings button).
+        // The small Style and Settings buttons, top right (or in the app row; Style → Settings button). Watch has no
+        // button: it's the section below the app rows (press down).
         gearPlace = Hb.prefs(this).getString("gear", "corner");
         parseFx(Hb.prefs(this).getString("tileFx", ""));
         readPrefs(Hb.prefs(this).getString("feel", ""));
@@ -337,13 +338,10 @@ public class HomeActivity extends Activity {
         corner.setOrientation(LinearLayout.HORIZONTAL);
         corner.setClipChildren(false);
         corner.setClipToPadding(false);
-        watchPill = pill("\uD83C\uDF7F Watch", () -> web.evaluateJavascript("window.hbWatch && hbWatch.open()", null));   // 🍿 What should I watch?
-        watchPill.setVisibility(watchOn ? View.VISIBLE : View.GONE);
-        corner.addView(watchPill, pillParams());
         corner.addView(pill("\uD83C\uDFA8", () -> openStyle()), pillParams());   // 🎨 Style
         corner.addView(pill("\u2699", () -> openSettings()), pillParams());   // ⚙ Settings
-        FrameLayout.LayoutParams kp = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.END);
-        kp.rightMargin = pad; kp.bottomMargin = Math.round(H * 0.022f);
+        FrameLayout.LayoutParams kp = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END);
+        kp.rightMargin = pad; kp.topMargin = Math.round(H * 0.025f);
         corner.setVisibility("corner".equals(gearPlace) ? View.VISIBLE : View.GONE);
         root.addView(corner, kp);
         placeRows();
@@ -395,6 +393,12 @@ public class HomeActivity extends Activity {
         boolean down = e.getAction() == KeyEvent.ACTION_DOWN;
         if (down) lastDx = code == KeyEvent.KEYCODE_DPAD_RIGHT ? 1 : code == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : code == KeyEvent.KEYCODE_DPAD_UP || code == KeyEvent.KEYCODE_DPAD_DOWN ? 0 : lastDx;
         if (down && !panelOpen && e.getRepeatCount() == 0 && (code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER)) navSound(true);
+        // Down from the top buttons (Style, Settings) goes back to the first app on the left, not the nearest one.
+        if (down && !panelOpen && code == KeyEvent.KEYCODE_DPAD_DOWN && corner != null && getCurrentFocus() != null
+                && getCurrentFocus().getParent() == corner && row.getChildCount() > 0) {
+            row.getChildAt(0).requestFocus(); scroller.smoothScrollTo(0, 0);
+            return true;
+        }
         // Down from the bottom row scrolls the screen into Watch (new & trending), which is part of the home screen.
         if (down && !panelOpen && code == KeyEvent.KEYCODE_DPAD_DOWN && e.getRepeatCount() == 0 && atBottom()) {
             sound("move");
@@ -432,6 +436,7 @@ public class HomeActivity extends Activity {
             if (w.equals(gearPlace)) return;
             gearPlace = w; Hb.prefs(HomeActivity.this).edit().putString("gear", w).apply();
             corner.setVisibility(panelOpen || !"corner".equals(w) ? View.GONE : View.VISIBLE);
+            sendGearTop();
             buildRow();
         } });
     }
@@ -606,7 +611,12 @@ public class HomeActivity extends Activity {
         root.requestLayout();
         sendRowTop();
     }
+    /** The buttons sit at the top right: the page leaves room for them so the Up next card isn't under them. */
+    private void sendGearTop() {
+        if (web != null) web.evaluateJavascript("document.body.classList.toggle('gear-top'," + "corner".equals(gearPlace) + ")", null);
+    }
     private void sendRowTop() {
+        sendGearTop();
         boolean on = "on".equals(fxLive) && liveRow != null && liveRow.getChildCount() > 0;
         int base = Math.round(scrH * 0.075f), liveBlock = Math.round(liveH * 1.24f);
         int top = (on ? base + liveBlock + Math.round(scrH * 0.035f) : base) + Math.round(tileH * 1.24f);
