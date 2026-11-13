@@ -21,8 +21,8 @@ html[data-th="evergreenglow"] #glow, html[data-th="evergreenglow"] #motes, html[
 @keyframes xfall { from { transform:translate3d(0,0,0) } 50% { transform:translate3d(1.5vw,52vh,0) } to { transform:translate3d(-1vw,106vh,0) } }
 /* The garland of lights along the top. */
 #xlights { bottom:auto; height:30vh; overflow:visible }
-#xlights .xgar { position:absolute; left:0; top:0; filter:drop-shadow(0 .6vh .8vh rgba(0,0,0,.45)) }
-#xlights .xbigbow { position:absolute; left:50%; top:-1.5vh; width:30vh; height:26vh; transform:translateX(-50%) }
+#xlights .xgar { position:absolute; left:0; top:0 }
+#xlights .xbigbow { position:absolute; left:50%; top:-2.4vh; width:42vh; height:35.7vh; transform:translateX(-50%) }
 #xlights .bl { position:absolute; width:.95vh; height:1.35vh; margin:-.2vh 0 0 -.47vh; border-radius:50% 50% 45% 45% }
 #xlights .bl.tw { animation:xtw ease-in-out infinite alternate; will-change:opacity }
 #xlights .bl::before { content:''; position:absolute; left:50%; top:-.35vh; width:.5vh; height:.45vh; margin-left:-.25vh; border-radius:.1vh; background:#2A3A30 }
@@ -43,7 +43,7 @@ html[data-th="evergreenglow"] #date { color:#E7C982 !important; text-shadow:0 0 
 #xdeco { position:fixed; left:0; top:0; z-index:3; pointer-events:none; will-change:transform }
 #xdeco .xsnow { position:absolute; left:-8px; top:calc(-5vh * .55 + 1px) }
 #xdeco .xsnow svg { display:block }
-#xdeco .xbells { position:absolute; left:-5.8vh; top:.4vh; width:10vh; height:10vh; transform-origin:58% 0; will-change:transform; animation:xswing 3.6s ease-in-out infinite alternate }
+#xdeco .xbells { position:absolute; left:auto; right:-3.4vh; top:.4vh; width:10vh; height:10vh; transform-origin:58% 0; will-change:transform; animation:xswing 3.6s ease-in-out infinite alternate }
 #xdeco .xbells svg { width:100%; height:100%; overflow:visible }
 @keyframes xswing { from { transform:rotate(-7deg) } to { transform:rotate(7deg) } }
 html[data-th="evergreenglow"] body.w-open #xdeco, body.sty-open #xdeco { opacity:0 }
