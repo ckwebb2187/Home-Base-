@@ -20,9 +20,9 @@ html[data-th="evergreenglow"] #glow, html[data-th="evergreenglow"] #motes, html[
 #xbokeh .fl { position:absolute; top:-2vh; border-radius:50%; background:radial-gradient(closest-side, #fff 40%, rgba(255,255,255,0)); will-change:transform; animation:xfall linear infinite }
 @keyframes xfall { from { transform:translate3d(0,0,0) } 50% { transform:translate3d(1.5vw,52vh,0) } to { transform:translate3d(-1vw,106vh,0) } }
 /* The garland of lights along the top. */
-#xlights { bottom:auto; height:30vh; overflow:visible }
+#xlights { bottom:auto; height:36vh; overflow:visible }
 #xlights .xgar { position:absolute; left:0; top:0 }
-#xlights .xbigbow { position:absolute; left:50%; top:-2.4vh; width:42vh; height:35.7vh; transform:translateX(-50%) }
+#xlights .xbigbow { position:absolute; left:50%; top:-1.8vh; width:38vh; height:32.3vh; transform:translateX(-50%) }
 #xlights .bl { position:absolute; width:.95vh; height:1.35vh; margin:-.2vh 0 0 -.47vh; border-radius:50% 50% 45% 45% }
 #xlights .bl.tw { animation:xtw ease-in-out infinite alternate; will-change:opacity }
 #xlights .bl::before { content:''; position:absolute; left:50%; top:-.35vh; width:.5vh; height:.45vh; margin-left:-.25vh; border-radius:.1vh; background:#2A3A30 }
