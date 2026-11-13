@@ -49,7 +49,7 @@ function xmasFx(on) {
       const fx = Math.max(0, Math.min(1, x / W)), e = edge(fx), b = bot(fx);
       x += (9 + R() * 7) / (1 + 1.4 * e);
       for (let row = 0, rows = 3 + Math.round(4 * e); row < rows; row++) {
-        const py = L === 2 ? b * (0.55 + R() * 0.5) : b * (0.1 + R() * 0.95), a = Math.PI / 2 + (R() * 2 - 1) * 1.25 * (1 - 0.55 * e), len = (2.2 + R() * 2.4) * (1 + 0.7 * e) * VH;
+        const py = L === 2 ? b * (0.55 + R() * 0.5) : b * (0.1 + R() * 0.95), a = Math.PI / 2 + (R() * 2 - 1) * 1.25 * (1 - 0.55 * e), len = (2.2 + R() * 2.4) * (1 + 0.7 * e) * (R() < 0.15 ? 1.6 + R() * 0.8 : 1) * VH;
         const P = paths[Math.floor(R() * cols.length)], cx = Math.cos(a), cy = Math.sin(a), nx = -cy, ny = cx;
         P.moveTo(x, py); P.lineTo(x + cx * len, py + cy * len);
         for (let n = 1; n <= 7; n++) {
@@ -69,7 +69,7 @@ function xmasFx(on) {
   /* branches hanging down from the garland, a little darker; longer and more of them toward the sides */
   const hang = [['#081F16', '#0B2A1C', '#0E3322'], ['#0F3824', '#13432B', '#164C31']];
   for (let x = 6; x < W - 6;) {
-    const fx = x / W, e = edge(fx), y0 = bot(fx) - 1.4 * VH, len = (2.5 + R() * 3.5 + 9 * e * (0.7 + R() * 0.6)) * VH, sway = (R() - .5) * 2.4 * VH;
+    const fx = x / W, e = edge(fx), y0 = bot(fx) - 1.4 * VH, len = (2 + R() * 3 + (R() < 0.35 ? 3 + R() * 6 : 0) + 9 * e * (0.7 + R() * 0.6)) * VH, sway = (R() - .5) * 2.4 * VH;
     hang.forEach((cols, L) => {
       const P = cols.map(() => new Path2D());
       for (let n = 0; n <= 16; n++) {
@@ -79,14 +79,15 @@ function xmasFx(on) {
       }
       g.lineWidth = (L ? 0.2 : 0.26) * VH; P.forEach((q, k) => { g.strokeStyle = cols[k]; g.stroke(q); });
     });
-    x += (5 + R() * 4) * VH / (1 + 1.6 * e);
+    x += (2.5 + R() * 6) * VH / (1 + 1.6 * e);
   }
-  const N = 28; let b = '';
+  /* warm white lights scattered through the garland at random, deep in it and near its edge; about one in three
+     twinkles slowly, the rest burn steady */
+  const N = 34; let b = '';
   for (let i = 0; i < N; i++) {
-    const x = (i + 0.5) / N, wob = (r(i + 300) - .5) * 2.4;
-    /* All warm white; about one in three twinkles, slowly, and the rest burn steady. */
+    const x = (i + 0.15 + r(i + 400) * 0.7) / N, depth = 0.25 + r(i + 300) * 0.7;
     const tw = r(i + 200) < 0.34;
-    b += `<i class="bl w${tw ? ' tw' : ''}" style="left:${(x * 100).toFixed(2)}vw;top:${(bot(x) / VH - 2.4 + wob).toFixed(2)}vh${tw ? `;animation-duration:${(6 + r(i + 120) * 5).toFixed(2)}s;animation-delay:${(-r(i + 150) * 9).toFixed(2)}s` : ''}"></i>`;
+    b += `<i class="bl w${tw ? ' tw' : ''}" style="left:${(x * 100).toFixed(2)}vw;top:${(bot(x) / VH * depth).toFixed(2)}vh;transform:scale(${(0.8 + r(i + 500) * 0.4).toFixed(2)})${tw ? `;animation-duration:${(6 + r(i + 120) * 5).toFixed(2)}s;animation-delay:${(-r(i + 150) * 9).toFixed(2)}s` : ''}"></i>`;
   }
   box.insertAdjacentHTML('beforeend', `${b}<svg class="xbigbow" viewBox="0 0 400 340">${XBOW4}</svg>`);
   /* The Up next card is dressed: snow piled on its top and two gold bells that swing from its right corner. */
