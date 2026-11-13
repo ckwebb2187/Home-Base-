@@ -1,10 +1,11 @@
 /* ---------- Watch: "What should I watch?" ----------
-   Opened from the app's Watch button (or W on a keyboard). Pick a mood, how much time and who's watching, then
-   browse the picks Nuvio-style: a big backdrop for the highlighted title, rows of posters, and OK opens it in Nuvio.
+   Part of the home screen: press down past the bottom app row and the screen scrolls into it (the Watch button and W
+   on a keyboard open it too). It always starts on what's new and trending, already loaded; Filter picks a mood, how
+   much time and who's watching. Browse the picks Nuvio-style: a big backdrop for the highlighted title, rows of posters, and OK opens it in Nuvio.
    Titles come from Cinemeta (the free catalog Nuvio and Stremio use: IMDb ids, posters, backdrops, logos, trailers),
    so there's no account or key. Rows are fetched once per mood and kept for the visit.
-   On the remote: arrows move, OK picks, Back steps out (results → questions → closed). */
-var WATCH = { open: false, step: 'ask', f: { r: 0, c: 0 }, mood: 'funny', time: 'movie', who: 'adults', seed: 1, rows: [], cache: {}, hero: null, busy: false };
+   On the remote: arrows move, OK picks, Up from the top or Back scrolls back to the home screen. */
+var WATCH = { open: false, mode: 'feed', feed: null, feedAt: 0, btns: [], step: 'ask', f: { r: 0, c: 0 }, mood: 'funny', time: 'movie', who: 'adults', seed: 1, rows: [], cache: {}, hero: null, busy: false };
 const WATCH_MOODS = [
   ['funny', 'Funny', '😂', ['Comedy']], ['cozy', 'Cozy', '☕', ['Family', 'Romance', 'Animation']],
   ['exciting', 'Exciting', '⚡', ['Action', 'Adventure']], ['scary', 'Scary', '👻', ['Horror', 'Thriller']],
@@ -27,9 +28,9 @@ const wEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&
 function wRand(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 function wShuffle(a, seed) { const r = wRand(seed), o = a.slice(); for (let i = o.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; } return o; }
 async function wFetch(type, list, genre) {
-  const k = `${type}/${list}/${genre}`;
+  const k = `${type}/${list}/${genre || ''}`;
   if (WATCH.cache[k]) return WATCH.cache[k];
-  const p = fetch(`${CM}/catalog/${type}/${list}/genre=${encodeURIComponent(genre)}.json`).then(r => r.ok ? r.json() : { metas: [] }).then(j => (j && j.metas) || []).catch(() => []);
+  const p = fetch(`${CM}/catalog/${type}/${list}${genre ? '/genre=' + encodeURIComponent(genre) : ''}.json`).then(r => r.ok ? r.json() : { metas: [] }).then(j => (j && j.metas) || []).catch(() => []);
   WATCH.cache[k] = p;
   const out = await p; if (!out.length) delete WATCH.cache[k];
   return out;
@@ -69,6 +70,35 @@ async function watchLoad() {
   rows.push({ name: 'Family channel guide', items: WATCH_GUIDE.map(g => ({ yt: g[2], name: g[0], icon: g[1] })) });
   WATCH.rows = rows.filter(r => r.items.length);
 }
+/* The default feed: what's new and trending, no questions asked. Kept for three hours, then quietly refreshed. */
+const FEED_MS = 3 * 3600 * 1000;
+async function watchLoadFeed(force) {
+  if (!force && WATCH.feed && Date.now() - WATCH.feedAt < FEED_MS) return WATCH.feed;
+  if (force) WATCH.cache = {};
+  const yr = String(new Date().getFullYear());
+  const [tm, ts, nm, ns, best] = await Promise.all([wFetch('movie', 'top'), wFetch('series', 'top'), wFetch('movie', 'year', yr), wFetch('series', 'year', yr), wFetch('movie', 'imdbRating')]);
+  const seen = new Set(), clean = (list, n, test) => {
+    const out = [];
+    for (const m of list) {
+      const id = m.imdb_id || m.id; if (!id || !/^tt\d+$/.test(id) || seen.has(id) || !m.poster) continue;
+      if (test && !test(m)) continue;
+      seen.add(id); out.push(m); if (out.length >= n) break;
+    }
+    return out;
+  };
+  const isNew = m => String(m.year || m.releaseInfo || '').startsWith(yr);
+  const rows = [
+    { name: 'Trending movies', items: clean(tm, 16) },
+    { name: 'Trending shows', items: clean(ts, 16) },
+    { name: 'New this year', items: clean(nm, 16, m => isNew(m) && (!wRating(m) || wRating(m) >= 5.8)) },
+    { name: 'New shows', items: clean(ns, 16, m => !wRating(m) || wRating(m) >= 5.8) },
+    { name: 'Best rated right now', items: clean(best, 16) },
+    { name: 'Family channel guide', items: WATCH_GUIDE.map(g => ({ yt: g[2], name: g[0], icon: g[1] })) }
+  ].filter(r => r.items.length);
+  if (!rows.some(r => r.items.some(m => !m.yt))) return WATCH.feed;   // offline: keep what we had
+  WATCH.feed = rows; WATCH.feedAt = Date.now();
+  return rows;
+}
 /* ---------- drawing ---------- */
 function watchBox() {
   let w = $('#watch');
@@ -81,9 +111,10 @@ function watchBox() {
   return w;
 }
 function watchAsk() {
+  WATCH.step = 'ask';
   const chip = (r, c, on, ico, label) => `<div class="w-chip${on ? ' sel' : ''}" data-r="${r}" data-c="${c}"><span class="i">${ico}</span><span>${wEsc(label)}</span></div>`;
   $('#watch .w-in').innerHTML = `<div class="w-ask">
-    <div class="w-title"><b>What should we watch?</b><span>Pick a mood, how long, and who's watching</span></div>
+    <div class="w-title"><b>What should we watch?</b><span>Pick a mood, how long, and who's watching · Back returns to what's trending</span></div>
     <div class="w-q"><span class="w-lbl">Mood</span><div class="w-chips">${WATCH_MOODS.map((m, i) => chip(0, i, m[0] === WATCH.mood, m[2], m[1])).join('')}</div></div>
     <div class="w-q"><span class="w-lbl">Time</span><div class="w-chips">${WATCH_TIMES.map((m, i) => chip(1, i, m[0] === WATCH.time, m[2], m[1])).join('')}</div></div>
     <div class="w-q"><span class="w-lbl">Who's watching</span><div class="w-chips">${WATCH_WHO.map((m, i) => chip(2, i, m[0] === WATCH.who, m[2], m[1])).join('')}</div></div>
@@ -91,10 +122,13 @@ function watchAsk() {
   watchFocus();
 }
 function watchResults() {
+  WATCH.step = 'res';
+  WATCH.btns = [['nuvio', '▶ Open in Nuvio'], ['trailer', '🎞 Trailer'], ['filter', '🎚 Filter']];
+  if (WATCH.mode === 'filtered') WATCH.btns.push(['more', '🎲 Something else'], ['feed', '🔥 New & trending']);
   const card = (m, r, c) => m.yt
     ? `<div class="w-card yt" data-r="${r}" data-c="${c}"><div class="w-ytb"><span>${m.icon || '▶'}</span><b>${wEsc(m.name)}</b><small>YouTube</small></div></div>`
     : `<div class="w-card" data-r="${r}" data-c="${c}"><img loading="lazy" src="${wEsc(m.poster)}" alt="" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="w-cn">${wEsc(m.name)}</span></div>`;
-  $('#watch .w-in').innerHTML = `<div class="w-res"><div class="w-hero"></div><div class="w-btns"><div class="w-btn pri" data-r="0" data-c="0">▶ Open in Nuvio</div><div class="w-btn" data-r="0" data-c="1">🎞 Trailer</div><div class="w-btn" data-r="0" data-c="2">🎲 Something else</div><div class="w-btn" data-r="0" data-c="3">✎ Change mood</div></div>
+  $('#watch .w-in').innerHTML = `<div class="w-res"><div class="w-tag">${WATCH.mode === 'feed' ? 'New &amp; trending' : 'Picked for you'}</div><div class="w-hero"></div><div class="w-btns">${WATCH.btns.map((b, c) => `<div class="w-btn${c ? '' : ' pri'}" data-r="0" data-c="${c}">${b[1]}</div>`).join('')}</div>
     <div class="w-rows">${WATCH.rows.map((row, i) => `<section class="w-row"><h3>${wEsc(row.name)}</h3><div class="w-track">${row.items.map((m, c) => card(m, i + 1, c)).join('')}</div></section>`).join('')}</div></div>`;
   const first = WATCH.rows[0] && WATCH.rows[0].items[0];
   WATCH.f = { r: 1, c: 0 };
@@ -128,12 +162,13 @@ function watchFocus() {
     const tr = el.closest('.w-track'); if (tr) { const x = el.offsetLeft - tr.clientWidth * 0.08; tr.style.transform = `translateX(${-Math.max(0, x)}px)`; }
     const rows = w.querySelector('.w-rows'), sec = el.closest('.w-row');
     if (rows && sec) rows.style.transform = `translateY(${-Math.max(0, sec.offsetTop - 0)}px)`;
-    if (WATCH.f.r > 0) { const m = watchItem(WATCH.f.r, WATCH.f.c); clearTimeout(WATCH.ht); WATCH.ht = setTimeout(() => watchHero(m), 140); }
+    if (rows) { const all = [...rows.querySelectorAll('.w-row')], at = sec ? all.indexOf(sec) : 0; all.forEach((x, i) => x.classList.toggle('past', i < at)); }
+    if (WATCH.f.r > 0) { const m = watchItem(WATCH.f.r, WATCH.f.c); clearTimeout(WATCH.ht); WATCH.ht = setTimeout(() => watchHero(m), 90); }
   }
 }
 function watchCount(r) {
   if (WATCH.step === 'ask') return [WATCH_MOODS.length, WATCH_TIMES.length, WATCH_WHO.length, 2][r] || 0;
-  if (r === 0) return 4;
+  if (r === 0) return WATCH.btns.length;
   const row = WATCH.rows[r - 1]; return row ? row.items.length : 0;
 }
 function watchToast(msg) { const t = $('#watch .w-toast'); if (!t) return; t.textContent = msg; t.hidden = false; clearTimeout(WATCH.tt); WATCH.tt = setTimeout(() => { t.hidden = true; }, 3200); }
@@ -150,29 +185,49 @@ function watchYt(q) {
   try { const r = HB_APP.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`, 'youtube'); if (r) watchToast(String(r)); } catch (e) {}
 }
 async function watchShow() {
-  WATCH.step = 'res'; WATCH.busy = true;
+  WATCH.mode = 'filtered'; WATCH.step = 'load'; WATCH.busy = true;
   $('#watch .w-in').innerHTML = `<div class="w-load"><i></i><span>Finding something good…</span></div>`;
   await watchLoad(); WATCH.busy = false;
   if (!WATCH.open) return;
   if (!WATCH.rows.some(r => r.items.some(m => !m.yt))) { $('#watch .w-in').innerHTML = `<div class="w-load"><span>Couldn't reach the movie catalog right now. Check the TV's internet, then try again.</span></div>`; WATCH.step = 'err'; return; }
   watchResults();
 }
+/* The feed: shown straight away when it's already loaded (it loads in the background after the page opens). */
+async function watchFeed(force) {
+  WATCH.mode = 'feed';
+  if (!force && WATCH.feed && Date.now() - WATCH.feedAt < FEED_MS) { WATCH.rows = WATCH.feed; watchResults(); return; }
+  WATCH.step = 'load'; WATCH.busy = true;
+  if (!WATCH.feed) $('#watch .w-in').innerHTML = `<div class="w-load"><i></i><span>Loading what's new and trending…</span></div>`;
+  const rows = await watchLoadFeed(force); WATCH.busy = false;
+  if (!WATCH.open || WATCH.mode !== 'feed') return;
+  if (!rows) { $('#watch .w-in').innerHTML = `<div class="w-load"><span>Couldn't reach the movie catalog right now. Check the TV's internet, then press OK to try again.</span></div>`; WATCH.step = 'err'; return; }
+  WATCH.rows = rows; watchResults();
+}
+function watchApp(open) {
+  try { if (HB_APP && typeof HB_APP.feed === 'function') HB_APP.feed(open); else if (HB_APP && typeof HB_APP.panel === 'function') HB_APP.panel(open); } catch (e) {}
+}
 function watchOpen() {
-  watchBox(); WATCH.open = true; WATCH.step = 'ask'; WATCH.f = { r: 0, c: Math.max(0, WATCH_MOODS.findIndex(m => m[0] === WATCH.mood)) };
-  document.body.classList.add('w-open'); watchAsk();
-  try { HB_APP && typeof HB_APP.panel === 'function' && HB_APP.panel(true); } catch (e) {}
+  if (WATCH.open) return;
+  watchBox(); WATCH.open = true; clearTimeout(WATCH.ct);
+  document.body.classList.remove('w-closing'); document.body.classList.add('w-open');
+  watchFeed(false);
+  watchApp(true);
 }
 function watchClose() {
-  WATCH.open = false; document.body.classList.remove('w-open');
-  try { HB_APP && typeof HB_APP.panel === 'function' && HB_APP.panel(false); } catch (e) {}
+  if (!WATCH.open) return;
+  WATCH.open = false; document.body.classList.add('w-closing');
+  clearTimeout(WATCH.ct); WATCH.ct = setTimeout(() => document.body.classList.remove('w-open', 'w-closing'), 360);
+  watchApp(false);
 }
 function watchKey(k) {
   const f = WATCH.f;
   if (k === 'back' || k === 'menu') {
-    if (WATCH.step === 'res' || WATCH.step === 'err') { WATCH.step = 'ask'; WATCH.f = { r: 3, c: 0 }; watchAsk(); } else watchClose();
+    if (WATCH.step === 'ask' || (WATCH.mode === 'filtered' && WATCH.step !== 'load')) watchFeed(false); else watchClose();
     return true;
   }
-  if (WATCH.busy) return true;
+  if (WATCH.step === 'res' && k === 'up' && f.r === 0) { watchClose(); return true; }
+  if (WATCH.step === 'err') { if (k === 'ok') watchFeed(true); else if (k === 'up') watchClose(); return true; }
+  if (WATCH.busy) { if (k === 'up') watchClose(); return true; }
   const rows = WATCH.step === 'ask' ? 4 : WATCH.rows.length + 1;
   if (k === 'left' || k === 'right') { const n = watchCount(f.r); f.c = Math.max(0, Math.min(n - 1, f.c + (k === 'left' ? -1 : 1))); watchFocus(); return true; }
   if (k === 'up' || k === 'down') {
@@ -191,11 +246,12 @@ function watchKey(k) {
   }
   if (WATCH.step !== 'res') return true;
   if (f.r === 0) {
-    const m = WATCH.hero;
-    if (f.c === 0 && m) watchLaunch('nuvio', m);
-    else if (f.c === 1 && m) watchLaunch('trailer', m);
-    else if (f.c === 2) { WATCH.seed++; watchShow(); }
-    else if (f.c === 3) { WATCH.step = 'ask'; WATCH.f = { r: 0, c: 0 }; watchAsk(); }
+    const m = WATCH.hero, b = (WATCH.btns[f.c] || [])[0];
+    if (b === 'nuvio' && m) watchLaunch('nuvio', m);
+    else if (b === 'trailer' && m) watchLaunch('trailer', m);
+    else if (b === 'more') { WATCH.seed++; watchShow(); }
+    else if (b === 'feed') watchFeed(false);
+    else if (b === 'filter') { WATCH.step = 'ask'; WATCH.f = { r: 0, c: Math.max(0, WATCH_MOODS.findIndex(x => x[0] === WATCH.mood)) }; watchAsk(); }
     return true;
   }
   const m = watchItem(f.r, f.c); if (!m) return true;
@@ -203,4 +259,6 @@ function watchKey(k) {
   return true;
 }
 window.hbWatch = { open: watchOpen, close: watchClose };
+/* Load the feed in the background so it's there the moment you scroll down, and keep it fresh. */
+if (MODE === 'home') { setTimeout(() => watchLoadFeed(false), 4000); setInterval(() => { if (!WATCH.open) watchLoadFeed(true); }, FEED_MS); }
 document.addEventListener('keydown', e => { if (e.key === 'w' && !WATCH.open && !PANEL.open && MODE === 'home') { watchOpen(); e.preventDefault(); } }, true);

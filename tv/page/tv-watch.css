@@ -1,9 +1,19 @@
 /* ---------- Watch ("What should I watch?"): full screen, Nuvio-style ---------- */
 #watch { display:none; position:fixed; inset:0; z-index:25; color:#fff; font-family:var(--f-body); overflow:hidden; background:#05070a }
-body.w-open #watch { display:block; animation:w-in 400ms var(--hbx-e, cubic-bezier(.2,.8,.2,1)) both }
+/* It sits below the home screen: opening scrolls everything up, closing scrolls back down. */
+#watch { --w-e:cubic-bezier(.22,1,.36,1) }
+body.w-open #watch { display:block; animation:w-up 420ms var(--w-e) both }
+body.w-closing #watch { animation:w-down 340ms cubic-bezier(.5,0,.2,1) both }
+#wrap { transition:translate 420ms cubic-bezier(.22,1,.36,1), opacity 320ms ease }
+body.w-open:not(.w-closing) #wrap { translate:0 -40vh; opacity:0 }
+@keyframes w-up { from { translate:0 100vh; opacity:.4 } to { translate:0 0; opacity:1 } }
+@keyframes w-down { from { translate:0 0; opacity:1 } to { translate:0 100vh; opacity:.4 } }
+.w-row { transition:opacity 260ms var(--w-e), translate 380ms var(--w-e) }
+.w-row.past { opacity:0; translate:0 -2vh }
+.w-tag { position:absolute; left:6vw; top:3.4vh; z-index:1; font:700 1.6vh/1 var(--f-body); letter-spacing:.32em; text-transform:uppercase; color:var(--accent, #ff8a5c) }
 body.w-open #lane, body.w-open .hbx-pal { display:none }
 @keyframes w-in { from { opacity:0; scale:1.02 } to { opacity:1; scale:1 } }
-.w-bd i { position:absolute; inset:0; background-size:cover; background-position:center 25%; opacity:0; transition:opacity 600ms var(--hbx-e, ease), scale 8s linear; scale:1.04 }
+.w-bd i { position:absolute; inset:0; background-size:cover; background-position:center 25%; opacity:0; transition:opacity 500ms ease, scale 8s linear; scale:1.04 }
 .w-bd i.on { opacity:1; scale:1 }
 .w-shade { position:absolute; inset:0; background:
   linear-gradient(90deg, rgba(5,7,10,.96) 0%, rgba(5,7,10,.82) 32%, rgba(5,7,10,.25) 62%, rgba(5,7,10,.05) 100%),
@@ -33,7 +43,7 @@ body.w-open #lane, body.w-open .hbx-pal { display:none }
 /* results: hero on top, rows of posters below */
 .w-res { position:absolute; inset:0 }
 .w-hero { position:absolute; left:6vw; top:8vh; width:42vw }
-.w-meta { animation:w-fade 400ms var(--hbx-e, ease) both }
+.w-meta { animation:w-fade 320ms var(--w-e) both }
 @keyframes w-fade { from { opacity:0; translate:0 1.5vh } to { opacity:1; translate:0 0 } }
 .w-logo { display:block; max-width:30vw; max-height:15vh; object-fit:contain; object-position:left bottom; filter:drop-shadow(0 .6vh 2vh rgba(0,0,0,.6)) }
 .w-name { font:800 6.4vh/1.02 var(--f-display); letter-spacing:-.02em; text-shadow:0 .6vh 3vh rgba(0,0,0,.6) }
@@ -42,14 +52,14 @@ body.w-open #lane, body.w-open .hbx-pal { display:none }
 .w-chips2 span:first-child { background:color-mix(in srgb, var(--gold) 85%, #000); color:#111 }
 .w-meta p { margin:0; font-size:2.05vh; line-height:1.45; color:rgba(255,255,255,.82); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; text-shadow:0 .3vh 1.5vh rgba(0,0,0,.7) }
 .w-btns { position:absolute; left:6vw; top:45vh; display:flex; gap:1.4vh }
-.w-rows { position:absolute; left:0; right:0; top:55vh; transition:transform 400ms var(--hbx-e, ease) }
+.w-rows { position:absolute; left:0; right:0; top:55vh; transition:transform 380ms var(--w-e); will-change:transform }
 .w-row { height:32vh; overflow:visible }
 .w-row h3 { margin:0 0 1.4vh 6vw; font:700 2.4vh/1 var(--f-display); color:rgba(255,255,255,.9) }
-.w-track { display:flex; gap:2.6vh; padding:1.6vh 6vw 4vh; transition:transform 250ms var(--hbx-e, ease) }
+.w-track { display:flex; gap:2.6vh; padding:1.6vh 6vw 4vh; transition:transform 300ms var(--w-e); will-change:transform }
 .w-card { position:relative; flex:none; width:15vh; height:22.5vh; border-radius:1.4vh; overflow:hidden; background:#151a20; box-shadow:0 .8vh 2.4vh rgba(0,0,0,.45);
-  transition:scale 250ms var(--hbx-e, ease), box-shadow 250ms, outline-color 150ms; outline:.35vh solid transparent; outline-offset:.4vh; cursor:pointer }
+  transition:scale 220ms var(--w-e), box-shadow 220ms, outline-color 150ms; outline:.35vh solid transparent; outline-offset:.4vh; cursor:pointer }
 .w-card img { width:100%; height:100%; object-fit:cover; display:block }
-.w-cn { position:absolute; left:0; right:0; bottom:0; padding:3vh 1vh 1vh; font-size:1.5vh; font-weight:700; background:linear-gradient(0deg, rgba(0,0,0,.85), transparent); opacity:0; transition:opacity 150ms }
+.w-cn { position:absolute; left:0; right:0; bottom:0; padding:3vh 1vh 1vh; font-size:1.5vh; font-weight:700; background:linear-gradient(0deg, rgba(0,0,0,.85), transparent); opacity:0; transition:opacity 180ms }
 .w-card.on-f { scale:1.12; outline-color:#fff; box-shadow:0 2vh 5vh rgba(0,0,0,.6), 0 0 4vh color-mix(in srgb, var(--accent) 55%, transparent); z-index:1 }
 .w-card.on-f .w-cn { opacity:1 }
 .w-card.noimg { background:linear-gradient(160deg, color-mix(in srgb, var(--accent) 45%, #111), #0b0d10) }
@@ -61,5 +71,5 @@ body.w-open #lane, body.w-open .hbx-pal { display:none }
 .w-ytb small { font-size:1.4vh; color:#ff6b6b; font-weight:800; letter-spacing:.08em; text-transform:uppercase }
 body.perf .w-bd i { transition:opacity 400ms; scale:1 }
 body.perf .w-chips2 span { backdrop-filter:none }
-@media (prefers-reduced-motion: reduce) { #watch, .w-bd i, .w-rows, .w-track, .w-card, .w-chip, .w-btn, .w-meta { animation:none !important; transition:none !important } }
+@media (prefers-reduced-motion: reduce) { #wrap, #watch, .w-bd i, .w-row, .w-rows, .w-track, .w-card, .w-chip, .w-btn, .w-meta { animation:none !important; transition:none !important } }
 body.w-open #pstrip { display:none !important }

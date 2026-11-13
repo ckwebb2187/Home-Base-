@@ -56,7 +56,7 @@ page = once(page, "function styleFromFeed(data) {\n  if (!PRESETS) return;\n  co
             "  const r = data && data.style;\n  if (!r || typeof r !== 'object' || !(+r.ts > styLoad().ts)) return;\n"
             "  const keep = styLoad().hbx;\n  STY = styClean(r);\n  if (+keep.ts > +STY.hbx.ts) STY.hbx = keep;")
 page = once(page, "  if (PANEL.open) panelDraw();\n}", "  if (PANEL.open) panelMarks();\n}")
-page = once(page, "page: '11.9-D', mode: MODE", "page: '13.2', mode: MODE")
+page = once(page, "page: '11.9-D', mode: MODE", "page: '13.3', mode: MODE")
 
 # 4b. Premium polish hooks: holiday level, screensaver pan & zoom, layers refreshed with each load, startup on open.
 page = once(page, "  const s = styLoad(), p = PALETTES[s.palette];\n  if (!p[1]) return lk;",

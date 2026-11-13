@@ -104,6 +104,7 @@ public class HomeActivity extends Activity {
     /** The feel switches from Style: tilt toward you, light sheen, navigation sounds (and volume), tile art. */
     private String fxTilt = "on", fxSheen = "on", fxSnd = "off", fxSndSet = "soft", fxVol = "low", fxArt = "theme", fxMusic = "zen", fxMusicVol = "mid";
     /** The one easing every animation uses (the page's cubic-bezier(.2,.8,.2,1)); 150 / 250 / 400 ms. */
+    private static final android.view.animation.Interpolator SMOOTH = new android.view.animation.PathInterpolator(0.22f, 1f, 0.36f, 1f);
     private static final android.view.animation.Interpolator EASE = new android.view.animation.PathInterpolator(0.2f, 0.8f, 0.2f, 1f);
     /** Which way the last arrow press went (-1 left, 1 right), so a newly focused tile tilts in from that side. */
     private int navDir = 0;
@@ -253,6 +254,7 @@ public class HomeActivity extends Activity {
                 });
             }
             @JavascriptInterface public void panel(final boolean open) { ui.post(() -> setPanel(open)); }
+            @JavascriptInterface public void feed(final boolean open) { ui.post(() -> { slidePanel = true; setPanel(open); slidePanel = false; }); }
             @JavascriptInterface public void pair() { ui.post(() -> startActivity(new Intent(HomeActivity.this, PairActivity.class))); }
             @JavascriptInterface public void place(final String where) { jsPlace(where); }
             @JavascriptInterface public void update() { jsUpdate(); }
@@ -393,7 +395,13 @@ public class HomeActivity extends Activity {
         boolean down = e.getAction() == KeyEvent.ACTION_DOWN;
         if (down) lastDx = code == KeyEvent.KEYCODE_DPAD_RIGHT ? 1 : code == KeyEvent.KEYCODE_DPAD_LEFT ? -1 : code == KeyEvent.KEYCODE_DPAD_UP || code == KeyEvent.KEYCODE_DPAD_DOWN ? 0 : lastDx;
         if (down && !panelOpen && e.getRepeatCount() == 0 && (code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER)) navSound(true);
-        // While Style is open, the remote drives it.
+        // Down from the bottom row scrolls the screen into Watch (new & trending), which is part of the home screen.
+        if (down && !panelOpen && code == KeyEvent.KEYCODE_DPAD_DOWN && e.getRepeatCount() == 0 && atBottom()) {
+            sound("move");
+            web.evaluateJavascript("window.hbWatch && hbWatch.open()", null);
+            return true;
+        }
+        // While Style or Watch is open, the remote drives it.
         if (panelOpen) {
             String k = keyName(code);
             if (k != null) { if (down) web.evaluateJavascript("window.hbKey && hbKey('" + k + "')", null); return true; }
@@ -439,16 +447,34 @@ public class HomeActivity extends Activity {
         web.evaluateJavascript(js, null);
         if (!panelOpen) Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
-    /** Style opened or closed: the app row steps out of the way so nothing draws over the panel. */
+    /** True when nothing sits below the focused app or button, so Down means "scroll into Watch". */
+    private boolean atBottom() {
+        View cur = getCurrentFocus();
+        if (cur == null) return false;
+        View nx = cur.focusSearch(View.FOCUS_DOWN);
+        if (nx == null || nx == cur || nx.getVisibility() != View.VISIBLE) return true;
+        int[] a = new int[2], b = new int[2];
+        cur.getLocationOnScreen(a); nx.getLocationOnScreen(b);
+        return b[1] <= a[1] + cur.getHeight() / 2;
+    }
+    /** Watch opening scrolls the rows up and out; Style just fades them. */
+    private boolean slidePanel;
+    /** Style or Watch opened or closed: the app row steps out of the way so nothing draws over the panel. */
     private void setPanel(boolean open) {
         if (open == panelOpen) return;
         panelOpen = open;
+        final boolean slide = slidePanel;
+        final float up = -scrH * 0.45f;
         final View[] parts = { scroller, label, corner, liveScroller, liveHead };
         for (View v : parts) {
             if (v == corner && !"corner".equals(gearPlace)) continue;
             v.animate().cancel();
-            if (open) v.animate().alpha(0f).setDuration(100).withEndAction(() -> v.setVisibility(View.INVISIBLE)).start();
-            else { v.setVisibility(View.VISIBLE); v.animate().alpha(1f).setDuration(150).start(); }
+            if (open) v.animate().alpha(0f).translationY(slide ? up : 0f).setStartDelay(0).setDuration(slide ? 380 : 100).setInterpolator(slide ? SMOOTH : EASE).withEndAction(() -> v.setVisibility(View.INVISIBLE)).start();
+            else {
+                v.setVisibility(View.VISIBLE);
+                if (slide) v.setTranslationY(up);
+                v.animate().alpha(1f).translationY(0f).setStartDelay(slide ? 60 : 0).setDuration(slide ? 420 : 150).setInterpolator(slide ? SMOOTH : EASE).start();
+            }
         }
         if (!open) { View f = row.getFocusedChild(); if (f != null) f.requestFocus(); else if (row.getChildCount() > 0) row.getChildAt(0).requestFocus(); }
         if (!open) { if (rowDirty) { rowDirty = false; buildRow(); } else placeRows(); }
@@ -495,7 +521,7 @@ public class HomeActivity extends Activity {
             style.run();
             v.animate().scaleX(has ? focusScale() : 1f).scaleY(has ? focusScale() : 1f).setDuration(250).setInterpolator(EASE).start();
             if (has && keyNav) { keyNav = false; sound("move"); }
-            if (has) label.setText(gear ? "Settings  ·  hold OK to change the Home Base code" : icon ? "Style  ·  colors, glows and effects" : "What should I watch?  ·  picks for your mood");
+            if (has) label.setText(gear ? "Settings  ·  hold OK to change the Home Base code" : icon ? "Style  ·  colors, glows and effects" : "Watch  ·  new & trending (or just press down)");
         });
         t.setOnClickListener(v -> pressThen(v, null, open));
         t.setOnLongClickListener(v -> { if (gear) { startActivity(new Intent(this, PairActivity.class)); return true; } return false; });
