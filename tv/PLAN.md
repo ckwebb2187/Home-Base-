@@ -15,6 +15,14 @@ Shared look module (tv/page/hb-look.js), quick looks, part colors, clock/date st
 glows, press effects, card styles, 17 background motions, original characters, cached live previews, sectioned Style
 panel, native tiles follow glow/press settings.
 
+## Done in 2.2 / page 12.1
+"What should I watch?" full-screen picker (mood, time, who's watching; free Cinemeta catalog, no key) with a backdrop
+hero, poster rows, Open in Nuvio (nuvio://movie|series/tt…), Trailer (YouTube), Something else, and a Family channel
+guide row of YouTube categories. 🍿 Watch button in the corner. Style → "Feel & extras": frosted glass, slow drift,
+time-of-day light, status strip, startup animation, screensaver zoom, tile tilt & shine, navigation sounds, Fun level,
+Watch button — each switchable; "Reset to recommended". Native: HB_APP.open(uri, pkg), HB_APP.prefs(json).
+Still to do: Trakt continue-watching row, weather touches, holiday themes, side-panel Style, mascot moments.
+
 ## Next: premium polish (every effect switchable on/off; calm by default)
 - Live color changing/cycling: OFF by default, option only. "Reset to recommended" restores calm defaults.
 - Foundation (always on): one display font + one text font everywhere (page, Style panel, native labels); spacing

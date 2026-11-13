@@ -1,0 +1,37 @@
+/* ---------- Feel & extras ---------- */
+/* Frosted glass: the Up next card blurs what's behind it, with a faint highlight along its top edge like light on glass. */
+body.p-glass .right { background:color-mix(in srgb, var(--card) 70%, transparent); backdrop-filter:blur(2.6vh) saturate(1.3); -webkit-backdrop-filter:blur(2.6vh) saturate(1.3) }
+body.p-glass .right::after { content:''; position:absolute; left:6%; right:6%; top:0; height:1px; background:linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); pointer-events:none }
+body.perf.p-glass .right { backdrop-filter:none; -webkit-backdrop-filter:none; background:var(--card) }
+/* Slow drift: the background glow and pattern move a few pixels a minute, so the screen never looks frozen. */
+body.p-drift #glow { animation:p-drift 120s ease-in-out infinite alternate }
+body.p-drift #pat { animation:p-drift2 180s linear infinite alternate }
+@keyframes p-drift { from { translate:-1.5vw -1vh; scale:1.04 } to { translate:1.5vw 1vh; scale:1.08 } }
+@keyframes p-drift2 { from { background-position:0 0 } to { background-position:48vh 24vh } }
+/* Time-of-day light: a soft wash from the top of the screen in the hour's color. */
+body.p-day::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:radial-gradient(ellipse 80% 70% at 30% -10%, color-mix(in srgb, var(--pol-tint, #fff) calc(var(--pol-tint-a, 0) * 100%), transparent), transparent 75%);
+  transition:background 4s ease }
+/* Status strip, top right. */
+#pstrip { display:none; position:fixed; top:2.2vh; right:5.5vw; z-index:3; gap:1.4vh; font:600 1.7vh/1 var(--f-body); color:rgba(255,255,255,.75) }
+body.p-strip #pstrip { display:flex }
+body.w-open #pstrip, body.sty-open #pstrip { display:none }
+#pstrip span { display:inline-flex; align-items:center; gap:.7vh; padding:.7vh 1.3vh; border-radius:99vh; background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.08) }
+#pstrip i { width:.9vh; height:.9vh; border-radius:50%; background:#3ddc84; box-shadow:0 0 .8vh #3ddc84 }
+#pstrip .off i { background:#ff5a5a; box-shadow:0 0 .8vh #ff5a5a }
+body.p-strip #wrap { padding-top:8vh }
+/* Startup: the screen assembles — clock, date, weather, then the card — each fading up a short distance. */
+body.p-start #clock, body.p-start #date, body.p-start #wx, body.p-start #next, body.p-start .right { animation:p-up 900ms var(--hbx-e, cubic-bezier(.2,.8,.2,1)) both }
+body.p-start #clock { animation-delay:100ms } body.p-start #date { animation-delay:250ms } body.p-start #wx { animation-delay:400ms }
+body.p-start #next { animation-delay:500ms } body.p-start .right { animation-delay:550ms }
+body.p-start #glow { animation:p-glowin 1600ms ease both }
+@keyframes p-up { from { opacity:0; translate:0 3vh; filter:blur(.6vh) } to { opacity:1; translate:0 0; filter:blur(0) } }
+@keyframes p-glowin { from { opacity:0 } to { opacity:1 } }
+/* Screensaver photos: a slow, gentle zoom while each one shows. */
+body.p-kb #photo .ph.show { animation:p-kb 22s linear both }
+@keyframes p-kb { from { scale:1 } to { scale:1.08 } }
+@media (prefers-reduced-motion: reduce) { body.p-drift #glow, body.p-drift #pat, body.p-start *, body.p-kb #photo .ph.show { animation:none !important } }
+/* The Style card frosts what's behind it, so the Up next text never shows through. */
+.sty-card { background:color-mix(in srgb, color-mix(in srgb, var(--bg) 82%, #000) 96%, transparent) }
+body.p-glass .sty-card { background:color-mix(in srgb, color-mix(in srgb, var(--bg) 82%, #000) 84%, transparent); backdrop-filter:blur(3.2vh) saturate(1.2); -webkit-backdrop-filter:blur(3.2vh) saturate(1.2) }
+body.perf.p-glass .sty-card { backdrop-filter:none; -webkit-backdrop-filter:none; background:color-mix(in srgb, var(--bg) 82%, #000) }

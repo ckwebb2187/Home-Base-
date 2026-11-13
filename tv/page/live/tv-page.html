@@ -292,6 +292,107 @@ body.style-page .sty-card { width:min(96vw, 1500px) } body.style-page #sty { jus
 #sty .hbx-opt:not(.on) .hbx-pv * { animation-play-state:paused !important }
 #sty .hbx-opt.on .hbx-pvw { box-shadow:0 0 0 .35vh var(--hbx-glow) !important; animation:none !important; background-image:none !important }
 .sty-card { box-shadow:0 2vh 6vh rgba(0,0,0,.5) }
+/* ---------- Watch ("What should I watch?"): full screen, Nuvio-style ---------- */
+#watch { display:none; position:fixed; inset:0; z-index:25; color:#fff; font-family:var(--f-body); overflow:hidden; background:#05070a }
+body.w-open #watch { display:block; animation:w-in 400ms var(--hbx-e, cubic-bezier(.2,.8,.2,1)) both }
+body.w-open #lane, body.w-open .hbx-pal { display:none }
+@keyframes w-in { from { opacity:0; scale:1.02 } to { opacity:1; scale:1 } }
+.w-bd i { position:absolute; inset:0; background-size:cover; background-position:center 25%; opacity:0; transition:opacity 600ms var(--hbx-e, ease), scale 8s linear; scale:1.04 }
+.w-bd i.on { opacity:1; scale:1 }
+.w-shade { position:absolute; inset:0; background:
+  linear-gradient(90deg, rgba(5,7,10,.96) 0%, rgba(5,7,10,.82) 32%, rgba(5,7,10,.25) 62%, rgba(5,7,10,.05) 100%),
+  linear-gradient(0deg, rgba(5,7,10,1) 0%, rgba(5,7,10,.88) 34%, rgba(5,7,10,0) 62%) }
+.w-in { position:absolute; inset:0 }
+.w-toast { position:absolute; left:50%; bottom:5vh; translate:-50% 0; padding:1.4vh 2.6vh; border-radius:1.6vh; background:rgba(20,24,30,.92); border:1px solid rgba(255,255,255,.12); font-size:2vh; z-index:2 }
+/* the questions */
+.w-ask { position:absolute; inset:0; padding:8vh 6vw; display:flex; flex-direction:column; gap:3.6vh;
+  background:radial-gradient(circle at 80% 10%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 55%), radial-gradient(circle at 10% 90%, color-mix(in srgb, var(--gold) 14%, transparent), transparent 50%) }
+.w-title b { display:block; font:800 6vh/1.05 var(--f-display); letter-spacing:-.02em }
+.w-title span { display:block; margin-top:1vh; font-size:2.2vh; color:rgba(255,255,255,.65) }
+.w-lbl { display:block; font-size:1.6vh; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:rgba(255,255,255,.55); margin-bottom:1.2vh }
+.w-chips { display:flex; flex-wrap:wrap; gap:1.2vh }
+.w-chip { display:inline-flex; align-items:center; gap:1vh; padding:1.3vh 2.2vh; border-radius:99vh; background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1); font-size:2.2vh; font-weight:600;
+  transition:scale 150ms var(--hbx-e, ease), background 150ms, border-color 150ms, box-shadow 150ms; cursor:pointer }
+.w-chip .i { font-size:2.4vh }
+.w-chip.sel { background:color-mix(in srgb, var(--accent) 30%, transparent); border-color:color-mix(in srgb, var(--accent) 80%, white 0%) }
+.w-chip.on-f, .w-btn.on-f { scale:1.08; background:#fff; color:#0b0d10; border-color:#fff; box-shadow:0 1vh 4vh rgba(0,0,0,.5), 0 0 3vh color-mix(in srgb, var(--accent) 60%, transparent) }
+.w-go { display:flex; gap:1.6vh; margin-top:1vh }
+.w-btn { display:inline-flex; align-items:center; gap:1vh; padding:1.5vh 3vh; border-radius:1.4vh; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.14); font-size:2.2vh; font-weight:700;
+  transition:scale 150ms var(--hbx-e, ease), background 150ms, box-shadow 150ms; cursor:pointer; white-space:nowrap }
+.w-btn.pri { background:color-mix(in srgb, var(--accent) 85%, #000); border-color:transparent }
+/* loading */
+.w-load { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2.4vh; font-size:2.4vh; color:rgba(255,255,255,.75); text-align:center; padding:0 10vw }
+.w-load i { width:6vh; height:6vh; border-radius:50%; border:.5vh solid rgba(255,255,255,.15); border-top-color:var(--accent); animation:w-spin 900ms linear infinite }
+@keyframes w-spin { to { rotate:360deg } }
+/* results: hero on top, rows of posters below */
+.w-res { position:absolute; inset:0 }
+.w-hero { position:absolute; left:6vw; top:8vh; width:42vw }
+.w-meta { animation:w-fade 400ms var(--hbx-e, ease) both }
+@keyframes w-fade { from { opacity:0; translate:0 1.5vh } to { opacity:1; translate:0 0 } }
+.w-logo { display:block; max-width:30vw; max-height:15vh; object-fit:contain; object-position:left bottom; filter:drop-shadow(0 .6vh 2vh rgba(0,0,0,.6)) }
+.w-name { font:800 6.4vh/1.02 var(--f-display); letter-spacing:-.02em; text-shadow:0 .6vh 3vh rgba(0,0,0,.6) }
+.w-chips2 { display:flex; flex-wrap:wrap; gap:1vh; margin:2vh 0 1.4vh }
+.w-chips2 span { padding:.5vh 1.3vh; border-radius:.9vh; background:rgba(255,255,255,.12); font-size:1.7vh; font-weight:700; backdrop-filter:blur(1vh) }
+.w-chips2 span:first-child { background:color-mix(in srgb, var(--gold) 85%, #000); color:#111 }
+.w-meta p { margin:0; font-size:2.05vh; line-height:1.45; color:rgba(255,255,255,.82); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; text-shadow:0 .3vh 1.5vh rgba(0,0,0,.7) }
+.w-btns { position:absolute; left:6vw; top:45vh; display:flex; gap:1.4vh }
+.w-rows { position:absolute; left:0; right:0; top:55vh; transition:transform 400ms var(--hbx-e, ease) }
+.w-row { height:32vh; overflow:visible }
+.w-row h3 { margin:0 0 1.4vh 6vw; font:700 2.4vh/1 var(--f-display); color:rgba(255,255,255,.9) }
+.w-track { display:flex; gap:2.6vh; padding:1.6vh 6vw 4vh; transition:transform 250ms var(--hbx-e, ease) }
+.w-card { position:relative; flex:none; width:15vh; height:22.5vh; border-radius:1.4vh; overflow:hidden; background:#151a20; box-shadow:0 .8vh 2.4vh rgba(0,0,0,.45);
+  transition:scale 250ms var(--hbx-e, ease), box-shadow 250ms, outline-color 150ms; outline:.35vh solid transparent; outline-offset:.4vh; cursor:pointer }
+.w-card img { width:100%; height:100%; object-fit:cover; display:block }
+.w-cn { position:absolute; left:0; right:0; bottom:0; padding:3vh 1vh 1vh; font-size:1.5vh; font-weight:700; background:linear-gradient(0deg, rgba(0,0,0,.85), transparent); opacity:0; transition:opacity 150ms }
+.w-card.on-f { scale:1.12; outline-color:#fff; box-shadow:0 2vh 5vh rgba(0,0,0,.6), 0 0 4vh color-mix(in srgb, var(--accent) 55%, transparent); z-index:1 }
+.w-card.on-f .w-cn { opacity:1 }
+.w-card.noimg { background:linear-gradient(160deg, color-mix(in srgb, var(--accent) 45%, #111), #0b0d10) }
+.w-card.noimg .w-cn { opacity:1; top:0; display:flex; align-items:flex-end; font-size:2vh; background:none }
+.w-card.yt { width:26vh; height:15vh; align-self:flex-start }
+.w-ytb { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; gap:.4vh; padding:1.6vh; background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 55%, #111), #2a0f12) }
+.w-ytb span { position:absolute; top:1.4vh; right:1.6vh; font-size:3.2vh }
+.w-ytb b { font-size:1.9vh; line-height:1.15; text-transform:capitalize }
+.w-ytb small { font-size:1.4vh; color:#ff6b6b; font-weight:800; letter-spacing:.08em; text-transform:uppercase }
+body.perf .w-bd i { transition:opacity 400ms; scale:1 }
+body.perf .w-chips2 span { backdrop-filter:none }
+@media (prefers-reduced-motion: reduce) { #watch, .w-bd i, .w-rows, .w-track, .w-card, .w-chip, .w-btn, .w-meta { animation:none !important; transition:none !important } }
+/* ---------- Feel & extras ---------- */
+/* Frosted glass: the Up next card blurs what's behind it, with a faint highlight along its top edge like light on glass. */
+body.p-glass .right { background:color-mix(in srgb, var(--card) 70%, transparent); backdrop-filter:blur(2.6vh) saturate(1.3); -webkit-backdrop-filter:blur(2.6vh) saturate(1.3) }
+body.p-glass .right::after { content:''; position:absolute; left:6%; right:6%; top:0; height:1px; background:linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent); pointer-events:none }
+body.perf.p-glass .right { backdrop-filter:none; -webkit-backdrop-filter:none; background:var(--card) }
+/* Slow drift: the background glow and pattern move a few pixels a minute, so the screen never looks frozen. */
+body.p-drift #glow { animation:p-drift 120s ease-in-out infinite alternate }
+body.p-drift #pat { animation:p-drift2 180s linear infinite alternate }
+@keyframes p-drift { from { translate:-1.5vw -1vh; scale:1.04 } to { translate:1.5vw 1vh; scale:1.08 } }
+@keyframes p-drift2 { from { background-position:0 0 } to { background-position:48vh 24vh } }
+/* Time-of-day light: a soft wash from the top of the screen in the hour's color. */
+body.p-day::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:radial-gradient(ellipse 80% 70% at 30% -10%, color-mix(in srgb, var(--pol-tint, #fff) calc(var(--pol-tint-a, 0) * 100%), transparent), transparent 75%);
+  transition:background 4s ease }
+/* Status strip, top right. */
+#pstrip { display:none; position:fixed; top:2.2vh; right:5.5vw; z-index:3; gap:1.4vh; font:600 1.7vh/1 var(--f-body); color:rgba(255,255,255,.75) }
+body.p-strip #pstrip { display:flex }
+body.w-open #pstrip, body.sty-open #pstrip { display:none }
+#pstrip span { display:inline-flex; align-items:center; gap:.7vh; padding:.7vh 1.3vh; border-radius:99vh; background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.08) }
+#pstrip i { width:.9vh; height:.9vh; border-radius:50%; background:#3ddc84; box-shadow:0 0 .8vh #3ddc84 }
+#pstrip .off i { background:#ff5a5a; box-shadow:0 0 .8vh #ff5a5a }
+body.p-strip #wrap { padding-top:8vh }
+/* Startup: the screen assembles — clock, date, weather, then the card — each fading up a short distance. */
+body.p-start #clock, body.p-start #date, body.p-start #wx, body.p-start #next, body.p-start .right { animation:p-up 900ms var(--hbx-e, cubic-bezier(.2,.8,.2,1)) both }
+body.p-start #clock { animation-delay:100ms } body.p-start #date { animation-delay:250ms } body.p-start #wx { animation-delay:400ms }
+body.p-start #next { animation-delay:500ms } body.p-start .right { animation-delay:550ms }
+body.p-start #glow { animation:p-glowin 1600ms ease both }
+@keyframes p-up { from { opacity:0; translate:0 3vh; filter:blur(.6vh) } to { opacity:1; translate:0 0; filter:blur(0) } }
+@keyframes p-glowin { from { opacity:0 } to { opacity:1 } }
+/* Screensaver photos: a slow, gentle zoom while each one shows. */
+body.p-kb #photo .ph.show { animation:p-kb 22s linear both }
+@keyframes p-kb { from { scale:1 } to { scale:1.08 } }
+@media (prefers-reduced-motion: reduce) { body.p-drift #glow, body.p-drift #pat, body.p-start *, body.p-kb #photo .ph.show { animation:none !important } }
+/* The Style card frosts what's behind it, so the Up next text never shows through. */
+.sty-card { background:color-mix(in srgb, color-mix(in srgb, var(--bg) 82%, #000) 96%, transparent) }
+body.p-glass .sty-card { background:color-mix(in srgb, color-mix(in srgb, var(--bg) 82%, #000) 84%, transparent); backdrop-filter:blur(3.2vh) saturate(1.2); -webkit-backdrop-filter:blur(3.2vh) saturate(1.2) }
+body.perf.p-glass .sty-card { backdrop-filter:none; -webkit-backdrop-filter:none; background:color-mix(in srgb, var(--bg) 82%, #000) }
 
 .stk { display:inline-block; width:var(--sz, 48px); height:var(--sz, 48px); flex:none; transform:rotate(var(--r0, 0deg)); pointer-events:none }
 .stk-a { display:block; width:100%; height:100%; animation:var(--an, none) var(--du, 4s) ease-in-out var(--dl, 0s) infinite; transform-origin:50% 60%; will-change:transform }
@@ -2193,7 +2294,7 @@ var PRESETS = [
   ['Max Futuristic', 29, 4, 5, 'aurora grid rings scan edge shimmer']
 ];
 var STY = null;
-function styDefault() { return { preset: 0, palette: 0, cycle: 0, glow: 1, fx: fxFromList(PRESETS[0][4]), wall: true, perf: true, gear: 'corner', hbx: HBLook.norm(null), ts: 0 }; }
+function styDefault() { return { preset: 0, palette: 0, cycle: 0, glow: 1, fx: fxFromList(PRESETS[0][4]), wall: true, perf: true, gear: 'corner', hbx: HBLook.norm(null), pol: polNorm(null), ts: 0 }; }
 function fxFromList(s) { const o = {}; EFFECTS.forEach(e => { o[e[0]] = (' ' + s + ' ').includes(' ' + e[0] + ' '); }); return o; }
 function styLoad() {
   if (STY) return STY;
@@ -2205,7 +2306,7 @@ function styClean(s) {
   const d = styDefault(), n = (v, max, def) => Number.isInteger(v) && v >= 0 && v < max ? v : def;
   const o = { preset: n(s.preset, PRESETS.length, d.preset), palette: n(s.palette, PALETTES.length, d.palette), cycle: n(s.cycle, CYCLES.length, d.cycle),
     glow: n(s.glow, GLOWS.length, d.glow), fx: {}, wall: s.wall !== false, perf: s.perf !== false, ts: +s.ts || 0,
-    gear: ['corner', 'end', 'start'].includes(s.gear) ? s.gear : 'corner', hbx: HBLook.norm(s.hbx) };
+    gear: ['corner', 'end', 'start'].includes(s.gear) ? s.gear : 'corner', hbx: HBLook.norm(s.hbx), pol: polNorm(s.pol) };
   EFFECTS.forEach(e => { o.fx[e[0]] = s.fx && typeof s.fx[e[0]] === 'boolean' ? s.fx[e[0]] : d.fx[e[0]]; });
   return o;
 }
@@ -2234,6 +2335,7 @@ function styApply(save) {
   D.look = '';   /* re-derive colors from the new palette */
   applyLook(D.data);
   HBLook.apply(s.hbx);
+  polApply(s.pol);
   cycleStart();
   if (save) {
     s.ts = Date.now();
@@ -2246,7 +2348,7 @@ let styPushT = 0;
 function styPush() {
   if (DEMO) return;
   clearTimeout(styPushT);
-  styPushT = setTimeout(() => { try { fetch('style', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...styLoad(), page: '12.0', mode: MODE }) }).catch(() => {}); } catch (e) {} }, 600);
+  styPushT = setTimeout(() => { try { fetch('style', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...styLoad(), page: '12.1', mode: MODE }) }).catch(() => {}); } catch (e) {} }, 600);
 }
 /* A newer style saved somewhere else (the phone, the other screen) arrives with tv.json. */
 function styleFromFeed(data) {
@@ -2373,16 +2475,18 @@ function tvSections() {
   });
   const app = [g('perf', 'Performance mode (keeps the TV quick)', [[1, 'On'], [0, 'Off']])];
   if (HB_APP && typeof HB_APP.place === 'function') app.push(g('gear', 'Style & Settings buttons', GEARS));
-  const acts = [['reset', 'Reset to Home Base classic']];
+  const acts = [['reset', 'Reset to recommended']];
   if (HB_APP && typeof HB_APP.pair === 'function') acts.push(['pair', 'Change the Home Base code']);
   if (HB_APP && typeof HB_APP.update === 'function') acts.push(['update', 'Update Home Base TV']);
   app.push(g('act', 'Actions', acts));
+  TV_SECTIONS.push(polSection());
   TV_SECTIONS.push({ id: 'app', name: 'Screen & app', hint: 'Performance, buttons, updates', groups: app });
   return TV_SECTIONS;
 }
 /* What's chosen right now for a setting (to put the check mark on the right tile). */
 function panelCur(k) {
   const s = styLoad(), L = s.hbx;
+  if (k.startsWith('pol.')) return polCur(k);
   if (k === 'preset' || k === 'palette' || k === 'cycle' || k === 'glow') return s[k];
   if (k === 'wall' || k === 'perf') return s[k] ? 1 : 0;
   if (k === 'gear') return s.gear || 'corner';
@@ -2398,6 +2502,7 @@ function panelIsSel(k, v) {
 /* Each tile's little picture. Ones from the shared look come from HBLook (built once, cached). */
 function tilePreview(k, v) {
   const H = HBLook;
+  if (k.startsWith('pol.')) return polPreview(k, v);
   if (H.LISTS[k] || k === 'quick' || k === 'part') return H.preview(k, v);
   if (k === 'palette') { const p = PALETTES[v], cols = p[1] ? p.slice(1) : ['var(--accent)', 'var(--gold)']; return `<div class="hbx-pv"><div class="pv-stripes">${cols.map(c => `<i style="background:${c}"></i>`).join('')}</div></div>`; }
   if (k === 'preset') { const p = PRESETS[v], pal = PALETTES[p[1]], cols = pal[1] ? pal.slice(1, 4) : ['var(--accent)', 'var(--gold)']; return `<div class="hbx-pv"><div class="pv-stripes">${cols.map(c => `<i style="background:${c}"></i>`).join('')}</div></div>`; }
@@ -2428,7 +2533,7 @@ function anyTiles() {
 }
 function groupHtml(sec, gi) {
   const gr = sec.groups[gi];
-  const cp = COMPACT.has(gr.key);
+  const cp = COMPACT.has(gr.key) || gr.key.startsWith('pol.');
   let body = gr.swatch ? swatchTiles() : gr.opts.map(([v, label]) => tileHtml(gr.key, v, label, cp ? 'cp' : '')).join('');
   const extra = gr.swatch ? `<div class="sty-any" hidden>${''}</div>` : '';
   return `<div class="sty-g" data-g="${gr.key}"><div class="sty-gh"><b>${esc(gr.name)}</b><span class="sty-gv"></span></div><div class="sty-grid${gr.swatch ? ' sw' : cp ? ' cp' : ''}">${body}</div>${extra}</div>`;
@@ -2463,7 +2568,7 @@ function panelOpen() {
   if (!p) {
     p = document.createElement('div'); p.id = 'sty'; document.body.appendChild(p);
     const secs = tvSections();
-    p.innerHTML = `<div class="sty-card"><div class="sty-h"><b>Style</b><span>${MODE === 'style' ? 'Tap a tile, or use the arrow keys' : '▲▼ section · ▶ / OK in · arrows move · OK picks · Back out'} · <em class="sty-ver">Page 12.0</em></span></div>
+    p.innerHTML = `<div class="sty-card"><div class="sty-h"><b>Style</b><span>${MODE === 'style' ? 'Tap a tile, or use the arrow keys' : '▲▼ section · ▶ / OK in · arrows move · OK picks · Back out'} · <em class="sty-ver">Page 12.1</em></span></div>
       <div class="sty-body"><nav class="sty-nav">${secs.map((s, i) => `<div class="sty-ni" data-s="${i}"><b>${esc(s.name)}</b><span>${esc(s.hint || '')}</span></div>`).join('')}</nav><div class="sty-pane"></div></div></div>`;
     p.addEventListener('click', e => {
       const ni = e.target.closest('.sty-ni'); if (ni) { panelShow(+ni.dataset.s); PANEL.zone = 'nav'; panelFocus(); return; }
@@ -2520,7 +2625,8 @@ function panelPick(t) {
   const s = styLoad(), k = t.dataset.k, raw = t.dataset.v, num = Number(raw), v = raw !== '' && !isNaN(num) && /^\d+$/.test(raw) ? num : raw;
   HBLook.press(t);
   const look = (key, val) => { s.hbx = HBLook.set(s.hbx, key, val); };
-  if (HBLook.LISTS[k] || k === 'quick') look(k, v);
+  if (k.startsWith('pol.')) polPick(s, k, raw);
+  else if (HBLook.LISTS[k] || k === 'quick') look(k, v);
   else if (k === 'part') { PANEL.part = raw; panelMarks(PANEL.built[PANEL.s]); return; }
   else if (k === 'swatch') look('color', [PANEL.part, raw]);
   else if (k === 'any') { const sec = PANEL.built[PANEL.s], box = sec && sec.querySelector('.sty-any'); if (box) { if (!box.dataset.made) { box.innerHTML = `<div class="sty-gh"><b>Any color</b><span class="sty-gv">for ${esc((HBLook.PARTS.find(x => x[0] === PANEL.part) || [])[1] || '')}</span></div><div class="sty-grid any">${anyTiles()}</div>`; box.dataset.made = '1'; panelMarks(box); } box.hidden = !box.hidden; } return; }
@@ -2572,6 +2678,283 @@ document.addEventListener('keydown', e => {
   const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', Enter: 'ok', Escape: 'back', Backspace: 'back', s: 'menu' };
   if (map[e.key] && window.hbKey(map[e.key])) e.preventDefault();
 });
+
+/* ---------- Feel & extras: the finishing touches, each one switchable ----------
+   Kept with the Style settings as s.pol. Defaults are calm: glass, slow drift, time-of-day light, the startup
+   animation, tile tilt & sheen and the Watch button are on; the status strip and sounds are off. Some of these are
+   drawn by the page (glass, drift, light, strip, startup, screensaver zoom); the app draws the rest (tilt, sheen,
+   sounds, Watch button) and gets them through HB_APP.prefs. */
+var POL_DEF = { glass: true, drift: true, day: true, strip: false, start: true, kb: true, tilt: true, sound: 'off', watch: true, fun: 'playful' };
+function polNorm(p) {
+  const o = { ...POL_DEF }; p = p && typeof p === 'object' ? p : {};
+  ['glass', 'drift', 'day', 'strip', 'start', 'kb', 'tilt', 'watch'].forEach(k => { if (typeof p[k] === 'boolean') o[k] = p[k]; });
+  if (['off', 'soft', 'normal'].includes(p.sound)) o.sound = p.sound;
+  if (['calm', 'playful', 'party'].includes(p.fun)) o.fun = p.fun;
+  return o;
+}
+var POL_GROUPS = [
+  ['glass', 'Frosted-glass panels', [[1, 'On'], [0, 'Off']]], ['drift', 'Slow background drift', [[1, 'On'], [0, 'Off']]],
+  ['day', 'Light that follows the time of day', [[1, 'On'], [0, 'Off']]], ['strip', 'Status strip (time, weather, Wi-Fi)', [[1, 'On'], [0, 'Off']]],
+  ['start', 'Startup animation', [[1, 'On'], [0, 'Off']]], ['kb', 'Screensaver photo zoom', [[1, 'On'], [0, 'Off']]],
+  ['tilt', 'App tiles tilt & shine', [[1, 'On'], [0, 'Off']]], ['sound', 'Navigation sounds', [['off', 'Off'], ['soft', 'Soft'], ['normal', 'Normal']]],
+  ['fun', 'Fun level', [['calm', 'Calm'], ['playful', 'Playful'], ['party', 'Party']]], ['watch', 'Watch button', [[1, 'On'], [0, 'Off']]]
+];
+var POL_KEYS = new Set(POL_GROUPS.map(g => 'pol.' + g[0]));
+function polSection() {
+  return { id: 'feel', name: 'Feel & extras', hint: 'Glass, light, sounds, fun', groups: POL_GROUPS.map(([k, name, opts]) => ({ key: 'pol.' + k, name, opts })) };
+}
+function polCur(k) { const p = polNorm(styLoad().pol), v = p[k.slice(4)]; return typeof v === 'boolean' ? (v ? 1 : 0) : v; }
+function polPick(s, k, raw) {
+  const key = k.slice(4), p = polNorm(s.pol);
+  p[key] = typeof POL_DEF[key] === 'boolean' ? raw === '1' : raw;
+  s.pol = p;
+  /* the fun level sets how often the characters visit (and turns them off at Calm) */
+  if (key === 'fun') { s.hbx = HBLook.set(s.hbx, 'pals', raw === 'calm' ? 'off' : 'on'); if (raw !== 'calm') s.hbx = HBLook.set(s.hbx, 'palsOften', raw === 'party' ? 'often' : 'some'); }
+}
+function polPreview(k, v) {
+  const key = k.slice(4), on = v === 1 || v === '1';
+  const icons = { glass: '🧊', drift: '🌫', day: '🌅', strip: '📶', start: '✨', kb: '🖼', tilt: '🃏', watch: '🍿' };
+  if (key === 'sound') return `<div class="hbx-pv"><span class="pv-fx">${v === 'off' ? '🔇' : v === 'soft' ? '🔉' : '🔊'}</span></div>`;
+  if (key === 'fun') return `<div class="hbx-pv"><span class="pv-fx">${v === 'calm' ? '🍃' : v === 'playful' ? '👻' : '🎉'}</span></div>`;
+  return `<div class="hbx-pv"><span class="pv-fx" style="opacity:${on ? 1 : .35}">${icons[key] || '•'}</span></div>`;
+}
+/* Time-of-day light: a soft wash over the background, warm in the morning, clear by day, golden in the evening,
+   deep blue at night. Updated every few minutes. */
+function polLight() {
+  const h = new Date().getHours() + new Date().getMinutes() / 60;
+  const tint = h < 5 ? ['#1b2a6b', .22] : h < 9 ? ['#ff9a4a', .13] : h < 16 ? ['#ffffff', .03] : h < 19 ? ['#ff7a2e', .14] : h < 22 ? ['#6b3fa0', .15] : ['#1b2a6b', .22];
+  document.documentElement.style.setProperty('--pol-tint', tint[0]); document.documentElement.style.setProperty('--pol-tint-a', tint[1]);
+}
+function polStrip() {
+  let el = document.getElementById('pstrip');
+  if (!el) { el = document.createElement('div'); el.id = 'pstrip'; el.setAttribute('aria-hidden', 'true'); document.body.appendChild(el); }
+  const d = new Date(); let h = d.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+  const wx = D.data && D.data.wx, t = wx && wx.now != null ? `${wx.now}°` : '';
+  const net = navigator.onLine !== false;
+  el.innerHTML = `<span>${h}:${String(d.getMinutes()).padStart(2, '0')} ${ap}</span>${t ? `<span>${t}</span>` : ''}<span class="${net ? 'ok' : 'off'}"><i></i>${net ? 'Online' : 'Offline'}</span>`;
+}
+let POL_T = 0, POL_STARTED = false;
+function polApply(pRaw) {
+  const p = polNorm(pRaw), b = document.body;
+  b.classList.toggle('p-glass', p.glass); b.classList.toggle('p-drift', p.drift); b.classList.toggle('p-day', p.day);
+  b.classList.toggle('p-strip', p.strip); b.classList.toggle('p-kb', p.kb);
+  if (p.day) polLight();
+  if (p.strip) polStrip();
+  clearInterval(POL_T); POL_T = setInterval(() => { const q = polNorm(styLoad().pol); if (q.day) polLight(); if (q.strip) polStrip(); }, 30000);
+  if (!POL_STARTED) { POL_STARTED = true; if (p.start && MODE === 'home' && !DEMO_NOSTART) { b.classList.add('p-start'); setTimeout(() => b.classList.remove('p-start'), 2600); } }
+  try { if (HB_APP && typeof HB_APP.prefs === 'function') HB_APP.prefs(JSON.stringify({ tilt: p.tilt, sound: p.sound, watch: p.watch })); } catch (e) {}
+}
+var DEMO_NOSTART = /nostart=1/.test(location.search);
+
+/* ---------- Watch: "What should I watch?" ----------
+   Opened from the app's Watch button (or W on a keyboard). Pick a mood, how much time and who's watching, then
+   browse the picks Nuvio-style: a big backdrop for the highlighted title, rows of posters, and OK opens it in Nuvio.
+   Titles come from Cinemeta (the free catalog Nuvio and Stremio use: IMDb ids, posters, backdrops, logos, trailers),
+   so there's no account or key. Rows are fetched once per mood and kept for the visit.
+   On the remote: arrows move, OK picks, Back steps out (results → questions → closed). */
+var WATCH = { open: false, step: 'ask', f: { r: 0, c: 0 }, mood: 'funny', time: 'movie', who: 'adults', seed: 1, rows: [], cache: {}, hero: null, busy: false };
+const WATCH_MOODS = [
+  ['funny', 'Funny', '😂', ['Comedy']], ['cozy', 'Cozy', '☕', ['Family', 'Romance', 'Animation']],
+  ['exciting', 'Exciting', '⚡', ['Action', 'Adventure']], ['scary', 'Scary', '👻', ['Horror', 'Thriller']],
+  ['mind', 'Mind-bending', '🌀', ['Mystery', 'Sci-Fi']], ['learn', 'Learn something', '🧠', ['Documentary', 'History', 'Biography']],
+  ['feel', 'Feel-good', '🌈', ['Comedy', 'Family']], ['epic', 'Epic', '🐉', ['Fantasy', 'Adventure', 'Sci-Fi']]
+];
+const WATCH_TIMES = [['quick', 'Under an hour', '⏱'], ['movie', 'A movie', '🎬'], ['binge', 'All night', '🌙']];
+const WATCH_WHO = [['adults', 'Grown-ups', '🛋'], ['family', 'Whole family', '👨‍👩‍👧'], ['kids', 'Kids', '🧸']];
+/* "On YouTube" ideas for each mood (opened as a YouTube search), and the family channel guide. */
+const WATCH_YT = {
+  funny: ['stand up comedy full special', 'funniest bloopers', 'improv comedy'], cozy: ['cozy cabin rain ambience', 'bob ross painting', 'slow living vlog'],
+  exciting: ['best car chase scenes', 'extreme sports highlights', 'parkour'], scary: ['scary stories animated', 'unsolved mysteries documentary', 'creepypasta'],
+  mind: ['mind blowing science', 'optical illusions explained', 'space mysteries'], learn: ['kurzgesagt', 'how its made', 'history documentary'],
+  feel: ['wholesome moments', 'dogs reunited with owners', 'random acts of kindness'], epic: ['epic orchestral music', 'lord of the rings behind the scenes', 'nature documentary 4k']
+};
+const WATCH_GUIDE = [['Learning', '🧠', 'kurzgesagt science explained'], ['Kids', '🧸', 'kids cartoons full episodes'], ['Cooking', '🍳', 'easy family dinner recipes'],
+  ['Chill', '🎧', 'lofi hip hop radio'], ['Gaming', '🎮', 'gaming highlights'], ['Nature', '🌿', 'nature documentary 4k'], ['Music', '🎵', 'top music videos this week'], ['Comedy', '😂', 'stand up comedy clips']];
+const CM = 'https://v3-cinemeta.strem.io';
+const wEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function wRand(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function wShuffle(a, seed) { const r = wRand(seed), o = a.slice(); for (let i = o.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; } return o; }
+async function wFetch(type, list, genre) {
+  const k = `${type}/${list}/${genre}`;
+  if (WATCH.cache[k]) return WATCH.cache[k];
+  const p = fetch(`${CM}/catalog/${type}/${list}/genre=${encodeURIComponent(genre)}.json`).then(r => r.ok ? r.json() : { metas: [] }).then(j => (j && j.metas) || []).catch(() => []);
+  WATCH.cache[k] = p;
+  const out = await p; if (!out.length) delete WATCH.cache[k];
+  return out;
+}
+const wMins = m => { const n = parseInt(String(m.runtime || ''), 10); return isNaN(n) ? 0 : n; };
+const wRating = m => parseFloat(m.imdbRating) || 0;
+const wKidsOk = m => { const g = (m.genres || m.genre || []).map(String); return !g.some(x => /Horror|Thriller|Crime|War/.test(x)) && g.some(x => /Animation|Family/.test(x)); };
+/* The picks: movies, shows and documentaries for the mood, time and who's watching. */
+async function watchLoad() {
+  const mood = WATCH_MOODS.find(m => m[0] === WATCH.mood) || WATCH_MOODS[0];
+  let genres = mood[3];
+  if (WATCH.who === 'kids') genres = WATCH.mood === 'learn' ? ['Documentary', 'Animation'] : ['Animation', 'Family'];
+  else if (WATCH.who === 'family' && (WATCH.mood === 'scary')) genres = ['Fantasy', 'Family'];
+  const both = (type, gs) => Promise.all(gs.flatMap(g => [wFetch(type, 'top', g), wFetch(type, 'imdbRating', g)])).then(a => a.flat());
+  const [mv, sr, docs] = await Promise.all([both('movie', genres), both('series', genres), WATCH.mood === 'learn' ? Promise.resolve([]) : both('movie', ['Documentary'])]);
+  const seen = new Set(), clean = (list, test) => {
+    const out = [];
+    for (const m of list) {
+      const id = m.imdb_id || m.id; if (!id || !/^tt\d+$/.test(id) || seen.has(id) || !m.poster) continue;
+      if (wRating(m) && wRating(m) < 6.2) continue;
+      if (WATCH.who !== 'adults' && !wKidsOk(m) && !(WATCH.mood === 'learn' && /Documentary/.test((m.genres || []).join()))) continue;
+      if (test && !test(m)) continue;
+      seen.add(id); out.push(m);
+    }
+    return out;
+  };
+  const cap = WATCH.time === 'movie' ? 130 : 999;
+  const movies = wShuffle(clean(mv, m => !wMins(m) || wMins(m) <= cap), WATCH.seed).slice(0, 14);
+  const shows = wShuffle(clean(sr), WATCH.seed + 1).slice(0, 14);
+  const doc = wShuffle(clean(docs), WATCH.seed + 2).slice(0, 12);
+  const yt = wShuffle(WATCH_YT[mood[0]] || [], WATCH.seed).map(q => ({ yt: q, name: q }));
+  const rows = [];
+  const mRow = { name: WATCH.who === 'kids' ? 'Movies for the kids' : 'Movies for you', items: movies }, sRow = { name: WATCH.time === 'quick' ? 'Quick episodes' : 'Shows to start', items: shows };
+  if (WATCH.time === 'quick') rows.push(sRow, mRow); else rows.push(mRow, sRow);
+  if (doc.length) rows.push({ name: 'Documentaries', items: doc });
+  rows.push({ name: 'On YouTube', items: yt.concat(WATCH_GUIDE.slice(0, 4).map(g => ({ yt: g[2], name: g[0], icon: g[1] }))) });
+  rows.push({ name: 'Family channel guide', items: WATCH_GUIDE.map(g => ({ yt: g[2], name: g[0], icon: g[1] })) });
+  WATCH.rows = rows.filter(r => r.items.length);
+}
+/* ---------- drawing ---------- */
+function watchBox() {
+  let w = $('#watch');
+  if (!w) {
+    w = document.createElement('div'); w.id = 'watch';
+    w.innerHTML = `<div class="w-bd"><i class="a"></i><i class="b"></i></div><div class="w-shade"></div><div class="w-in"></div><div class="w-toast" hidden></div>`;
+    document.body.appendChild(w);
+    w.addEventListener('click', e => { const t = e.target.closest('[data-r]'); if (!t) return; WATCH.f = { r: +t.dataset.r, c: +t.dataset.c }; watchFocus(); watchKey('ok'); });
+  }
+  return w;
+}
+function watchAsk() {
+  const chip = (r, c, on, ico, label) => `<div class="w-chip${on ? ' sel' : ''}" data-r="${r}" data-c="${c}"><span class="i">${ico}</span><span>${wEsc(label)}</span></div>`;
+  $('#watch .w-in').innerHTML = `<div class="w-ask">
+    <div class="w-title"><b>What should we watch?</b><span>Pick a mood, how long, and who's watching</span></div>
+    <div class="w-q"><span class="w-lbl">Mood</span><div class="w-chips">${WATCH_MOODS.map((m, i) => chip(0, i, m[0] === WATCH.mood, m[2], m[1])).join('')}</div></div>
+    <div class="w-q"><span class="w-lbl">Time</span><div class="w-chips">${WATCH_TIMES.map((m, i) => chip(1, i, m[0] === WATCH.time, m[2], m[1])).join('')}</div></div>
+    <div class="w-q"><span class="w-lbl">Who's watching</span><div class="w-chips">${WATCH_WHO.map((m, i) => chip(2, i, m[0] === WATCH.who, m[2], m[1])).join('')}</div></div>
+    <div class="w-go"><div class="w-btn pri" data-r="3" data-c="0">Show me</div><div class="w-btn" data-r="3" data-c="1">🎲 Surprise me</div></div></div>`;
+  watchFocus();
+}
+function watchResults() {
+  const card = (m, r, c) => m.yt
+    ? `<div class="w-card yt" data-r="${r}" data-c="${c}"><div class="w-ytb"><span>${m.icon || '▶'}</span><b>${wEsc(m.name)}</b><small>YouTube</small></div></div>`
+    : `<div class="w-card" data-r="${r}" data-c="${c}"><img loading="lazy" src="${wEsc(m.poster)}" alt="" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="w-cn">${wEsc(m.name)}</span></div>`;
+  $('#watch .w-in').innerHTML = `<div class="w-res"><div class="w-hero"></div><div class="w-btns"><div class="w-btn pri" data-r="0" data-c="0">▶ Open in Nuvio</div><div class="w-btn" data-r="0" data-c="1">🎞 Trailer</div><div class="w-btn" data-r="0" data-c="2">🎲 Something else</div><div class="w-btn" data-r="0" data-c="3">✎ Change mood</div></div>
+    <div class="w-rows">${WATCH.rows.map((row, i) => `<section class="w-row"><h3>${wEsc(row.name)}</h3><div class="w-track">${row.items.map((m, c) => card(m, i + 1, c)).join('')}</div></section>`).join('')}</div></div>`;
+  const first = WATCH.rows[0] && WATCH.rows[0].items[0];
+  WATCH.f = { r: 1, c: 0 };
+  watchHero(first);
+  watchFocus();
+}
+/* The big backdrop and details for the highlighted title (crossfades between two layers). */
+function watchHero(m) {
+  if (!m || m.yt) { if (m && m.yt) { const h = $('#watch .w-hero'); h.innerHTML = `<div class="w-meta"><div class="w-name">${wEsc(m.name)}</div><div class="w-chips2"><span>YouTube</span><span>Opens a search</span></div><p>Opens YouTube on the TV with “${wEsc(m.yt)}”.</p></div>`; } return; }
+  WATCH.hero = m;
+  const bd = $('#watch .w-bd'), a = bd.querySelector('.a'), b = bd.querySelector('.b'), front = a.classList.contains('on') ? b : a, back = front === a ? b : a;
+  const url = m.background || m.poster;
+  const img = new Image(); img.onload = () => { if (WATCH.hero !== m) return; front.style.backgroundImage = `url("${url}")`; front.classList.add('on'); back.classList.remove('on'); }; img.src = url;
+  const g = (m.genres || m.genre || []).slice(0, 3), mins = wMins(m), yr = m.year || m.releaseInfo || '';
+  const chips = [wRating(m) ? `★ ${wRating(m).toFixed(1)}` : '', yr, m.type === 'series' ? 'Series' : mins ? `${Math.floor(mins / 60) ? Math.floor(mins / 60) + ' hr ' : ''}${mins % 60} min` : '', ...g].filter(Boolean);
+  const name = m.logo ? `<img class="w-logo" src="${wEsc(m.logo)}" alt="${wEsc(m.name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><div class="w-name" style="display:none">${wEsc(m.name)}</div>` : `<div class="w-name">${wEsc(m.name)}</div>`;
+  $('#watch .w-hero').innerHTML = `<div class="w-meta">${name}<div class="w-chips2">${chips.map(c => `<span>${wEsc(c)}</span>`).join('')}</div><p>${wEsc(String(m.description || '').slice(0, 260))}</p></div>`;
+}
+function watchItem(r, c) {
+  if (WATCH.step === 'ask') return null;
+  if (r === 0) return null;
+  const row = WATCH.rows[r - 1]; return row ? row.items[c] : null;
+}
+function watchFocus() {
+  const w = $('#watch'); if (!w) return;
+  w.querySelectorAll('.on-f').forEach(x => x.classList.remove('on-f'));
+  const el = w.querySelector(`[data-r="${WATCH.f.r}"][data-c="${WATCH.f.c}"]`);
+  if (!el) return;
+  el.classList.add('on-f');
+  if (WATCH.step === 'res') {
+    const tr = el.closest('.w-track'); if (tr) { const x = el.offsetLeft - tr.clientWidth * 0.08; tr.style.transform = `translateX(${-Math.max(0, x)}px)`; }
+    const rows = w.querySelector('.w-rows'), sec = el.closest('.w-row');
+    if (rows && sec) rows.style.transform = `translateY(${-Math.max(0, sec.offsetTop - 0)}px)`;
+    if (WATCH.f.r > 0) { const m = watchItem(WATCH.f.r, WATCH.f.c); clearTimeout(WATCH.ht); WATCH.ht = setTimeout(() => watchHero(m), 140); }
+  }
+}
+function watchCount(r) {
+  if (WATCH.step === 'ask') return [WATCH_MOODS.length, WATCH_TIMES.length, WATCH_WHO.length, 2][r] || 0;
+  if (r === 0) return 4;
+  const row = WATCH.rows[r - 1]; return row ? row.items.length : 0;
+}
+function watchToast(msg) { const t = $('#watch .w-toast'); if (!t) return; t.textContent = msg; t.hidden = false; clearTimeout(WATCH.tt); WATCH.tt = setTimeout(() => { t.hidden = true; }, 3200); }
+/* Opens a title in Nuvio (its own detail page), a trailer, or a YouTube search, through the app. */
+function watchLaunch(kind, m) {
+  if (!HB_APP || typeof HB_APP.open !== 'function') { watchToast('Update the TV app (Style → Screen & app → Update) to open titles from here.'); return; }
+  let uri = '', pkg = '';
+  if (kind === 'nuvio') { uri = `nuvio://${m.type === 'series' ? 'series' : 'movie'}/${m.imdb_id || m.id}`; pkg = 'nuvio'; }
+  else if (kind === 'trailer') { const t = (m.trailerStreams && m.trailerStreams[0] && m.trailerStreams[0].ytId) || (m.trailers && m.trailers[0] && m.trailers[0].source); if (!t) { watchYt(`${m.name} ${m.year || ''} trailer`); return; } uri = `https://www.youtube.com/watch?v=${encodeURIComponent(t)}`; pkg = 'youtube'; }
+  try { const r = HB_APP.open(uri, pkg); if (r) watchToast(String(r)); } catch (e) { watchToast("That didn't open."); }
+}
+function watchYt(q) {
+  if (!HB_APP || typeof HB_APP.open !== 'function') { watchToast('Update the TV app to open YouTube from here.'); return; }
+  try { const r = HB_APP.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`, 'youtube'); if (r) watchToast(String(r)); } catch (e) {}
+}
+async function watchShow() {
+  WATCH.step = 'res'; WATCH.busy = true;
+  $('#watch .w-in').innerHTML = `<div class="w-load"><i></i><span>Finding something good…</span></div>`;
+  await watchLoad(); WATCH.busy = false;
+  if (!WATCH.open) return;
+  if (!WATCH.rows.some(r => r.items.some(m => !m.yt))) { $('#watch .w-in').innerHTML = `<div class="w-load"><span>Couldn't reach the movie catalog right now. Check the TV's internet, then try again.</span></div>`; WATCH.step = 'err'; return; }
+  watchResults();
+}
+function watchOpen() {
+  watchBox(); WATCH.open = true; WATCH.step = 'ask'; WATCH.f = { r: 0, c: Math.max(0, WATCH_MOODS.findIndex(m => m[0] === WATCH.mood)) };
+  document.body.classList.add('w-open'); watchAsk();
+  try { HB_APP && typeof HB_APP.panel === 'function' && HB_APP.panel(true); } catch (e) {}
+}
+function watchClose() {
+  WATCH.open = false; document.body.classList.remove('w-open');
+  try { HB_APP && typeof HB_APP.panel === 'function' && HB_APP.panel(false); } catch (e) {}
+}
+function watchKey(k) {
+  const f = WATCH.f;
+  if (k === 'back' || k === 'menu') {
+    if (WATCH.step === 'res' || WATCH.step === 'err') { WATCH.step = 'ask'; WATCH.f = { r: 3, c: 0 }; watchAsk(); } else watchClose();
+    return true;
+  }
+  if (WATCH.busy) return true;
+  const rows = WATCH.step === 'ask' ? 4 : WATCH.rows.length + 1;
+  if (k === 'left' || k === 'right') { const n = watchCount(f.r); f.c = Math.max(0, Math.min(n - 1, f.c + (k === 'left' ? -1 : 1))); watchFocus(); return true; }
+  if (k === 'up' || k === 'down') {
+    const nr = Math.max(0, Math.min(rows - 1, f.r + (k === 'up' ? -1 : 1)));
+    if (nr !== f.r) { f.r = nr; f.c = Math.min(f.c, watchCount(nr) - 1);
+      if (WATCH.step === 'ask' && nr < 3) { const keys = [WATCH.mood, WATCH.time, WATCH.who], lists = [WATCH_MOODS, WATCH_TIMES, WATCH_WHO]; f.c = Math.max(0, lists[nr].findIndex(x => x[0] === keys[nr])); }
+      watchFocus(); }
+    return true;
+  }
+  if (k !== 'ok') return false;
+  if (WATCH.step === 'ask') {
+    if (f.r === 0) WATCH.mood = WATCH_MOODS[f.c][0]; else if (f.r === 1) WATCH.time = WATCH_TIMES[f.c][0]; else if (f.r === 2) WATCH.who = WATCH_WHO[f.c][0];
+    else { if (f.c === 1) { const r = wRand(Date.now()); WATCH.mood = WATCH_MOODS[Math.floor(r() * WATCH_MOODS.length)][0]; WATCH.time = WATCH_TIMES[Math.floor(r() * 2) + 1][0]; } WATCH.seed = (Date.now() / 1000) | 0; watchShow(); return true; }
+    const cur = f.r; watchAsk(); WATCH.f = { r: cur + 1, c: 0 }; if (cur + 1 < 3) { const keys = [WATCH.mood, WATCH.time, WATCH.who], lists = [WATCH_MOODS, WATCH_TIMES, WATCH_WHO]; WATCH.f.c = Math.max(0, lists[cur + 1].findIndex(x => x[0] === keys[cur + 1])); } watchFocus();
+    return true;
+  }
+  if (WATCH.step !== 'res') return true;
+  if (f.r === 0) {
+    const m = WATCH.hero;
+    if (f.c === 0 && m) watchLaunch('nuvio', m);
+    else if (f.c === 1 && m) watchLaunch('trailer', m);
+    else if (f.c === 2) { WATCH.seed++; watchShow(); }
+    else if (f.c === 3) { WATCH.step = 'ask'; WATCH.f = { r: 0, c: 0 }; watchAsk(); }
+    return true;
+  }
+  const m = watchItem(f.r, f.c); if (!m) return true;
+  if (m.yt) watchYt(m.yt); else { WATCH.hero = m; watchLaunch('nuvio', m); }
+  return true;
+}
+window.hbWatch = { open: watchOpen, close: watchClose };
+document.addEventListener('keydown', e => { if (e.key === 'w' && !WATCH.open && !PANEL.open && MODE === 'home') { watchOpen(); e.preventDefault(); } }, true);
+
+/* Watch takes the remote's buttons while it's open; Style gets them otherwise. */
+(function () { const styleKey = window.hbKey; window.hbKey = k => WATCH.open ? watchKey(k) : styleKey(k); })();
 styApply(false);
 if (MODE === 'style') { document.body.classList.add('home'); panelOpen(); }
 setInterval(() => HBLook.lock(), 60000);
